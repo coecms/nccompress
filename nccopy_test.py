@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-from __future__ import print_function
-import glob
 import subprocess
 import os
 import sys
 import netCDF4 as nc
-
 import argparse
-
-from argparse import ArgumentParser, ArgumentTypeError
 import re
 
 def parseNumList(string):
@@ -19,10 +14,35 @@ def parseNumList(string):
     end = m.group(2) or start
     return list(range(int(start,10), int(end,10)+1))
 
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
+
 parser = argparse.ArgumentParser()
-parser.add_argument("-d","--dlevel", help="set deflate level", type=parseNumList, default='0-9')
+parser.add_argument("-d","--dlevel", help="set deflate level, ranges can be specified, e.g. 0-9 (default)", type=parseNumList, default='0-9')
+parser.add_argument("-u","--unlimited", help="squash unlimited dimension (TRUE/FALSE)", type=str2bool)
+parser.add_argument("-s","--shuffle", help="add shuffle to deflation (TRUE/FALSE)", type=str2bool)
 parser.add_argument("files", help="netCDF files", action='append')
 args = parser.parse_args()
+
+# If no -u option given we test both, otherwise only test the one
+# specified by True or False
+if args.unlimited is None:
+    unlimvalues = [True,False]
+elif args.unlimited:
+    unlimvalues = [True]
+else:
+    unlimvalues = [False]
+ 
+# If no -u option given we test both, otherwise only test the one
+# specified by True or False
+if args.shuffle is None:
+    shuffvalues = [True,False]
+elif args.shuffle:
+    shuffvalues = [True]
+else:
+    shuffvalues = [False]   
+
+if args.dlevel[0] < 0 or args.dlevel[-1] > 9: raise ArgumentTypeError("Valid values for -d range from 0 to 9");
 
 # debug=True
 debug=False
@@ -76,14 +96,14 @@ for file in args.files:
     #     for d in range(dimsize/4,dimsize,dimsize/4)
     # for deflate in range(0,10):
     for deflate in args.dlevel:
-        for removeunlim in (True,False):
-            for shuff in (True,False):
+        for removeunlim in unlimvalues:
+            for shuff in shuffvalues:
                 try:
                     copydict = run_nccopy(file,tmpdir,level=deflate,limited=removeunlim,shuffle=shuff)
                 except:
                     print("Something went wrong with {}".format(file))
                     continue
-                print("{} d = {} Conv unlim: {:d} Shuffle: {:d} {} s {} s {} s {} Kb {:0.4}".format(file, deflate, removeunlim, shuff, copydict['times'][0], copydict['times'][1], copydict['times'][2], copydict['times'][3], float(copydict['orig_size'])/float(copydict['comp_size'])),end='\n')
+                print("{} d = {} Conv unlim: {:d} Shuffle: {:d} {} s {} s {} s {} Kb {:0.4}".format(file, deflate, removeunlim, shuff, copydict['times'][0], copydict['times'][1], copydict['times'][2], copydict['times'][3], float(copydict['orig_size'])/float(copydict['comp_size'])))
  
     
 print()
