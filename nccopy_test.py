@@ -21,6 +21,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d","--dlevel", help="set deflate level, ranges can be specified, e.g. 0-9 (default)", type=parseNumList, default='0-9')
 parser.add_argument("-u","--unlimited", help="squash unlimited dimension (TRUE/FALSE)", type=str2bool)
 parser.add_argument("-s","--shuffle", help="add shuffle to deflation (TRUE/FALSE)", type=str2bool)
+parser.add_argument("-t","--tmpdir", help="specify temporary directory to save compressed files", default='tmp')
+parser.add_argument("-v","--verbose", help="verbose output", action='store_true')
 parser.add_argument("files", help="netCDF files", action='append')
 args = parser.parse_args()
 
@@ -44,11 +46,11 @@ else:
 
 if args.dlevel[0] < 0 or args.dlevel[-1] > 9: raise ArgumentTypeError("Valid values for -d range from 0 to 9");
 
-# debug=True
-debug=False
+# Make sure our output directory exists
+if not os.path.isdir(args.tmpdir): 
+    os.makedirs(args.tmpdir)
 
-path='./'
-tmpdir='tmp'
+debug=args.verbose
 
 # Need to use system time command explicitly, otherwise get crippled bash version
 timecmd='/usr/bin/time'
@@ -63,7 +65,8 @@ def run_nccopy(ncfile,outdir,level='4',limited=False,shuffle=False,chunking=None
     #   %U     Total number of CPU-seconds that the process spent in user mode.
     #   %M     Maximum resident set size of the process during its lifetime, in Kbytes.
     fmt = "%e %S %U %M"
-    outfile = os.path.join(path,outdir,ncfile)
+    # strip current path of file and join to our temporary directory
+    outfile = os.path.join(outdir,os.path.basename(ncfile))
     cmd = ['time','-f',fmt,nccopy,'-d',str(level)]
     if (limited): cmd.append('-u')
     if (shuffle): cmd.append('-s')
@@ -72,22 +75,20 @@ def run_nccopy(ncfile,outdir,level='4',limited=False,shuffle=False,chunking=None
         cmd.append(chunking)
     cmd.append(ncfile)
     cmd.append(outfile)
-    if (debug):
-        print (' '.join(cmd))
-    else:
-        try:
-            output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-            copyobj = {
-                'times' : output.split(),
-                'orig_size' : os.path.getsize(outfile),
-                'comp_size' : os.path.getsize(ncfile),
-                'dlevel' : level,
-                'shuffle' : shuffle,
-                'limited' : limited
+    if (debug): print (' '.join(cmd))
+    try:
+        output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        copyobj = {
+            'times' : output.split(),
+            'orig_size' : os.path.getsize(outfile),
+            'comp_size' : os.path.getsize(ncfile),
+            'dlevel' : level,
+            'shuffle' : shuffle,
+            'limited' : limited
                       }
-            return copyobj
-        except:
-            raise
+        return copyobj
+    except:
+        raise
 
 for file in args.files:
     # Open the data set and get some info on the dimensions
@@ -98,13 +99,13 @@ for file in args.files:
     for deflate in args.dlevel:
         for removeunlim in unlimvalues:
             for shuff in shuffvalues:
+                if (debug): print file,args.tmpdir,deflate,removeunlim,shuff
                 try:
-                    copydict = run_nccopy(file,tmpdir,level=deflate,limited=removeunlim,shuffle=shuff)
+                    copydict = run_nccopy(file,args.tmpdir,level=deflate,limited=removeunlim,shuffle=shuff)
                 except:
                     print("Something went wrong with {}".format(file))
                     continue
                 print("{} d = {} Conv unlim: {:d} Shuffle: {:d} {} s {} s {} s {} Kb {:0.4}".format(file, deflate, removeunlim, shuff, copydict['times'][0], copydict['times'][1], copydict['times'][2], copydict['times'][3], float(copydict['orig_size'])/float(copydict['comp_size'])))
  
     
-print()
 
