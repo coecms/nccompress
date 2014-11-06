@@ -6,11 +6,31 @@ import os
 import sys
 import netCDF4 as nc
 
+import argparse
+
+from argparse import ArgumentParser, ArgumentTypeError
+import re
+
+def parseNumList(string):
+    m = re.match(r'(\d+)(?:-(\d+))?$', string)
+    if not m:
+        raise ArgumentTypeError("'" + string + "' is not a range of number. Expected forms like '0-5' or '2'.")
+    start = m.group(1)
+    end = m.group(2) or start
+    return list(range(int(start,10), int(end,10)+1))
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-d","--dlevel", help="set deflate level", type=parseNumList, default='0-9')
+parser.add_argument("files", help="netCDF files", action='append')
+args = parser.parse_args()
+
 # debug=True
 debug=False
 
 path='./'
 tmpdir='tmp'
+
+# Need to use system time command explicitly, otherwise get crippled bash version
 timecmd='/usr/bin/time'
 
 nccopy='nccopy'
@@ -37,7 +57,6 @@ def run_nccopy(ncfile,outdir,level='4',limited=False,shuffle=False,chunking=None
     else:
         try:
             output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-            # return output.split(),float(os.path.getsize(outfile))/float(os.path.getsize(ncfile))
             copyobj = {
                 'times' : output.split(),
                 'orig_size' : os.path.getsize(outfile),
@@ -50,25 +69,21 @@ def run_nccopy(ncfile,outdir,level='4',limited=False,shuffle=False,chunking=None
         except:
             raise
 
-# all_files=glob.glob(os.path.join(path,'*.nc'))
-# all_files=['TFLUX.0000691200.nc']
-# all_files=['clearly_not_a_real_file.nc']
-
-for arg in sys.argv[1:]:
-# for n in range(len(all_files)):
+for file in args.files:
     # Open the data set and get some info on the dimensions
-    ## data = Dataset(all_files[n], 'r')
-    ## for (dimname,dimsize) in data.dimensions.items():
-    ##     for d in range(dimsize/4,dimsize,dimsize/4)
-    for deflate in range(0,10):
+    # data = Dataset(all_files[n], 'r')
+    # for (dimname,dimsize) in data.dimensions.items():
+    #     for d in range(dimsize/4,dimsize,dimsize/4)
+    # for deflate in range(0,10):
+    for deflate in args.dlevel:
         for removeunlim in (True,False):
             for shuff in (True,False):
                 try:
-                    copydict = run_nccopy(arg,tmpdir,level=deflate,limited=removeunlim,shuffle=shuff)
+                    copydict = run_nccopy(file,tmpdir,level=deflate,limited=removeunlim,shuffle=shuff)
                 except:
-                    print("Something went wrong with {}".format(arg))
+                    print("Something went wrong with {}".format(file))
                     continue
-                print("{} d = {} Conv unlim: {:d} Shuffle: {:d} {} s {} s {} s {} Kb {:0.4}".format(arg, deflate, removeunlim, shuff, copydict['times'][0], copydict['times'][1], copydict['times'][2], copydict['times'][3], float(copydict['orig_size'])/float(copydict['comp_size'])),end='\n')
+                print("{} d = {} Conv unlim: {:d} Shuffle: {:d} {} s {} s {} s {} Kb {:0.4}".format(file, deflate, removeunlim, shuff, copydict['times'][0], copydict['times'][1], copydict['times'][2], copydict['times'][3], float(copydict['orig_size'])/float(copydict['comp_size'])),end='\n')
  
     
 print()
