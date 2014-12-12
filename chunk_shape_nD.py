@@ -1,19 +1,8 @@
 import math
 import operator
 import numpy as np
-
-def count(arr):
-    """Return number of true values in the array arr"""
-    o = np.ones(np.size(arr),dtype="int")
-    return sum(o[arr])
-
-def binlist(n, width=0):
-    """Return list of bits that represent a non-negative integer.
-
-    n      -- non-negative integer
-    width  -- number of bits in returned zero-filled list (default 0)
-    """
-    return map(int, list(bin(n)[2:].zfill(width)))
+import numpy.ma as ma
+import pdb
 
 def numVals(shape):
     """Return number of values in chunk of specified shape, given by a list of dimension lengths.
@@ -23,21 +12,25 @@ def numVals(shape):
         return 1
     return reduce(operator.mul, shape)
 
-def perturbShape(shape, onbits):
-    """Return shape perturbed by adding 1 to elements corresponding to 1 bits in onbits
-
-    shape  -- list of variable dimension sizes
-    onbits -- non-negative integer less than 2**len(shape)
+def calcChunkShape(chunkVol, varShape):
     """
-    return map(sum, zip(shape, binlist(onbits, len(shape))))
+    Calculate a chunk shape for a given volume/area for the dimensions in varShape.
 
-def chunk_shape_nD(varShape, valSize=4, chunkSize=4096):
+    chunkVol   -- volume/area of the chunk
+    chunkVol   -- array of dimensions for the whole dataset
     """
-    Return a 'good shape' for a 3D variable, assuming balanced 1D, 2D access
+
+    return np.array(np.ceil(np.asarray(varShape) * (chunkVol / float(numVals(varShape))) ** (1./len(varShape))),dtype="int")
+
+def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=2):
+    """
+    Return a 'good shape' for an nD variable, assuming balanced 1D, 2D access
 
     varShape  -- list of variable dimension sizes
     chunkSize -- minimum chunksize desired, in bytes (default 4096)
     valSize   -- size of each data value, in bytes (default 4)
+    minDim    -- mimimum chunk dimension (if var dimension larger
+                 than this value, otherwise it is just var dimension)
 
     Returns integer chunk lengths of a chunk shape that provides
     balanced access of 1D subsets and 2D subsets of a netCDF or HDF5
@@ -47,66 +40,105 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096):
     chunkSize, which is often a disk block size.
     """
 
-    rank = len(varShape)
+    import pdb
+
+    varShapema = ma.array(varShape)
+    
     chunkVals = chunkSize / float(valSize) # ideal number of values in a chunk
-    numChunks  = numVals(varShape) / chunkVals # ideal number of chunks
-    axisChunks = numChunks ** (1./rank)   # ideal number of chunks along each axis
 
-    # Add together all the axisChunks, divide up by the proportion of the total number
-    # of dimensions, with the proviso that minimum size is 0.1 of dimension size
-    # Also would like to make the chunk a multiple of dimension
-    # Also need to make sure cache is large enough
+    # Make an ideal chunk shape array 
+    chunkShape = ma.array(calcChunkShape(chunkVals,varShapema),dtype=int)
 
-    axisFrac = np.array(varShape) / float(sum(varShape))
+    # And a copy where we'll store our final values
+    chunkShapeFinal = ma.masked_all(chunkShape.shape,dtype=int)
 
-    # Renormalise all fractions greater than 0.1
-    tot = sum(axisFrac>0.1)/float(count(axisFrac>0.1))
-    for i in range(len(axisFrac)):
-        if axisFrac[i] > 0.1:
-            axisFrac[i] /= tot
-        else:
-            axisFrac[i] = 0.1
-            
-    cFloor = numChunks * axisChunks
+    lastChunkCount = -1
     
-    cFloor = [] # will be first estimate of good chunk shape
-    # cFloor  = [varShape[0] // axisChunks**2, varShape[1] // axisChunks, varShape[2] // axisChunks]
-    # except that each chunk shape dimension must be at least 1
-    # chunkDim = max(1.0, varShape[0] // axisChunks**2)
-    if varShape[0] / axisChunks**2 < 1.0:
-        chunkDim = 1.0
-        axisChunks = axisChunks / math.sqrt(varShape[0]/axisChunks**2)
-    else:
-        chunkDim = varShape[0] // axisChunks**2
+    while True:
 
-    
-        
-    cFloor.append(chunkDim)
-    prod = 1.0  # factor to increase other dims if some must be increased to 1.0
-    for i in range(1, rank):
-        if varShape[i] / axisChunks < 1.0:
-            prod *= axisChunks / varShape[i]
-    for i in range(1, rank):
-        if varShape[i] / axisChunks < 1.0:
-            chunkDim = 1.0
+        # Loop over the axes in chunkShape, making sure they are at
+        # least minDim in length.
+        for i in range(len(chunkShape)):
+            if ma.is_masked(chunkShape[i]):
+                continue 
+            if (chunkShape[i] < minDim):
+                # Set the final chunk shape for this dimension
+                chunkShapeFinal[i] = min(minDim,varShapema[i])
+                # mask it out of the array of possible chunkShapes
+                chunkShape[i] = ma.masked
+
+        # print chunkShape,chunkShapeFinal
+        # Have we fixed any dimensions and filled them in chunkShapeFinal?
+        if chunkShapeFinal.count() > 0:
+            chunkCount = numVals(chunkShapeFinal[~chunkShapeFinal.mask])
         else:
-            chunkDim = (prod*varShape[i]) // axisChunks
-        cFloor.append(chunkDim)
+            if (lastChunkCount == -1):
+                # Haven't modified initial guess, break out of
+                # this loop and accept chunkShape 
+                break
 
-    # cFloor is typically too small, (numVals(cFloor) < chunkSize)
-    # Adding 1 to each shape dim results in chunks that are too large,
-    # (numVals(cCeil) > chunkSize).  Want to just add 1 to some of the
-    # axes to get as close as possible to chunkSize without exceeding
-    # it.  Here we use brute force, compute numVals(cCand) for all
-    # 2**rank candidates and return the one closest to chunkSize
-    # without exceeding it.
-    bestChunkSize = 0
-    cBest = cFloor
-    for i in range(8):
-        # cCand = map(sum,zip(cFloor, binlist(i, rank)))
-        cCand = perturbShape(cFloor, i)
-        thisChunkSize = valSize * numVals(cCand)
-        if bestChunkSize < thisChunkSize <= chunkSize:
-            bestChunkSize = thisChunkSize
-            cBest = list(cCand) # make a copy of best candidate so far
-    return map(int, cBest)
+        if chunkCount != lastChunkCount:
+            # Recalculate chunkShape array, with reduced dimensions
+            chunkShape[~chunkShape.mask] = calcChunkShape(chunkVals/chunkCount,varShapema[~chunkShape.mask])
+            lastChunkCount = chunkCount
+        else:
+            break
+
+
+    # This doesn't work when chunkShape has no masked values. Weird.
+    # chunkShapeFinal[chunkShapeFinal.mask] = chunkShape[~chunkShape.mask]
+    for i in range(len(chunkShapeFinal)):
+        if ma.is_masked(chunkShapeFinal[i]):
+            chunkShapeFinal[i] = chunkShape[i]
+
+    return chunkShapeFinal
+
+if __name__ == "__main__":
+
+    # import pdb
+
+    def checkError(chunks, answer):
+        if (chunks-np.asarray(answer)).any():
+            print "Error!"
+            print chunks, answer
+
+    print calcChunkShape(1024,(50,1440,1080))
+    print calcChunkShape(342,(1440,1080))
+
+    # pdb.set_trace()
+
+    chunks = chunk_shape_nD([50,1440,1080])
+    checkError(chunks, [2, 35, 26])
+
+    print chunks, numVals(chunks)*4.
+
+    chunks = chunk_shape_nD([50,1440,1080],valSize=8)
+    checkError(chunks, [2, 19, 14])
+
+    print chunks, numVals(chunks)*8.
+
+    chunks = chunk_shape_nD([50,1440,1080],chunkSize=8192)
+    checkError(chunks, [2, 43, 33])
+
+    print chunks, numVals(chunks)*4.
+
+    chunks = chunk_shape_nD([5, 50,1440,1080])
+    checkError(chunks, [2, 2, 19, 14])
+
+    print chunks, numVals(chunks)*4.
+
+    chunks = chunk_shape_nD([1440,1080])
+    checkError(chunks, [37, 28])
+
+    print chunks, numVals(chunks)*4.
+
+    chunks = chunk_shape_nD([1440])
+    checkError(chunks, [1024])
+
+    print chunks, numVals(chunks)*4.
+
+    chunks = chunk_shape_nD([10000,5,50,1440,1080])
+    checkError(chunks, [26, 2, 2, 4, 3])
+
+    print chunks, numVals(chunks)*4.
+
