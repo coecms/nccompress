@@ -21,22 +21,6 @@ def maxcompression_type(x):
         raise argparse.ArgumentTypeError("Minimum maxcompression is 0")
     return x
 
-parser = argparse.ArgumentParser(description="Run nccopy on a number of netCDF files")
-parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
-parser.add_argument("-l","--limited", help="Change unlimited dimension to fixed size (default is to not squash unlimited)", action='store_true')
-parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
-parser.add_argument("-t","--tmpdir", help="Specify temporary directory to save compressed files", default='tmp.nc_compress')
-parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
-parser.add_argument("-r","--recursive", help="Recursively descend directories compressing all netCDF files (default False)", action='store_true')
-parser.add_argument("-o","--overwrite", help="Overwrite original files with compressed versions (default is to not overwrite)", action='store_true')
-parser.add_argument("-m","--maxcompress", help="Set a maximum compression as a paranoid check on success of nccopy (default is 10, set to zero for no check)", default=10,type=maxcompression_type)
-parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='*')
-args = parser.parse_args()
-
-paranoid = False if args.maxcompress == 0 else True
-
-verbose=args.verbose
-
 def run_nccopy(infile,outfile,level,limited,shuffle,chunking=None):
     # The format string for the time command
     #   %e     (Not in tcsh.) Elapsed real time (in seconds).
@@ -143,45 +127,60 @@ def compress_files(path,files,tmpdir,overwrite,paranoid,maxcompress,level,limite
     except OSError:
         print("Failed to remove temporary directory {}".format(outdir))
 
-
-## MAIN ##
+if __name__ == "__main__":
     
-filedict = defaultdict(list)
+    parser = argparse.ArgumentParser(description="Run nccopy on a number of netCDF files")
+    parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
+    parser.add_argument("-l","--limited", help="Change unlimited dimension to fixed size (default is to not squash unlimited)", action='store_true')
+    parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
+    parser.add_argument("-t","--tmpdir", help="Specify temporary directory to save compressed files", default='tmp.nc_compress')
+    parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
+    parser.add_argument("-r","--recursive", help="Recursively descend directories compressing all netCDF files (default False)", action='store_true')
+    parser.add_argument("-o","--overwrite", help="Overwrite original files with compressed versions (default is to not overwrite)", action='store_true')
+    parser.add_argument("-m","--maxcompress", help="Set a maximum compression as a paranoid check on success of nccopy (default is 10, set to zero for no check)", default=10,type=maxcompression_type)
+    parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='+')
+    args = parser.parse_args()
+    
+    paranoid = False if args.maxcompress == 0 else True
 
-# Loop over all the inputs from the command line. These can be either file globs
-# or directory names. In either case we'll group them by directory
-for ncinput in args.inputs:
-    if not os.path.exists(ncinput):
-        print ("Input does not exist: {} .. skipping".format(ncinput))
-        continue
-    if os.path.isdir(ncinput):
-        # os.walk will return the entire directory structure
-        for root, dirs, files in os.walk(ncinput):
-            # Ignore emtpy directories, and our own temp directory, in case we
-            # re-run on same tree
-            if len(files) == 0: continue
-            if root.endswith(args.tmpdir): continue
-            # Only descend into subdirs if we've set the recursive flag
-            if (root != ncinput and not args.recursive):
-                print("Skipping subdirectory {0} :: --recursive option not specified".format(root))
-                continue
-            else:
-                # Group by directory
-                filedict[root].append(files)
+    verbose=args.verbose
+
+    filedict = defaultdict(list)
+
+    # Loop over all the inputs from the command line. These can be either file globs
+    # or directory names. In either case we'll group them by directory
+    for ncinput in args.inputs:
+        if not os.path.exists(ncinput):
+            print ("Input does not exist: {} .. skipping".format(ncinput))
+            continue
+        if os.path.isdir(ncinput):
+            # os.walk will return the entire directory structure
+            for root, dirs, files in os.walk(ncinput):
+                # Ignore emtpy directories, and our own temp directory, in case we
+                # re-run on same tree
+                if len(files) == 0: continue
+                if root.endswith(args.tmpdir): continue
+                # Only descend into subdirs if we've set the recursive flag
+                if (root != ncinput and not args.recursive):
+                    print("Skipping subdirectory {0} :: --recursive option not specified".format(root))
+                    continue
+                else:
+                    # Group by directory
+                    filedict[root].extend(files)
+        else:
+            (root,file) = os.path.split(ncinput)
+            if (root == ''): root = "./"
+            filedict[root].append(file)
+
+    if len(filedict) == 0:
+        print "No files found to process"
     else:
-        (root,file) = os.path.split(ncinput)
-        if (root == ''): root = "./"
-        filedict[root].append(file)
-
-if len(filedict) == 0:
-    print "No files found to process"
-else:
-    # Compress files directory by directory. We only create a temporary directory once,
-    # and can then clean up after ourselves. Also makes it easier to run some checks to
-    # ensure compression is ok, as all the files are named the same, just in a separate
-    # temporary sub directory.
-    for directory in filedict:
-        if len(filedict[directory]) == 0: continue
-        compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,paranoid,args.maxcompress,args.dlevel,args.limited,not args.noshuffle)
+        # Compress files directory by directory. We only create a temporary directory once,
+        # and can then clean up after ourselves. Also makes it easier to run some checks to
+        # ensure compression is ok, as all the files are named the same, just in a separate
+        # temporary sub directory.
+        for directory in filedict:
+            if len(filedict[directory]) == 0: continue
+            compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,paranoid,args.maxcompress,args.dlevel,args.limited,not args.noshuffle)
 
                 
