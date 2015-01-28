@@ -125,6 +125,36 @@ def is_compressed(ncfile):
     for var in tmp.variables:
         print var,getattr(tmp.variables[var],'_DeflateLevel')
         
+def run_nc2nc(infile,outfile,level,limited,shuffle,chunking=None):
+    # The format string for the time command
+    #   %e     (Not in tcsh.) Elapsed real time (in seconds).
+    #   %S     Total number of CPU-seconds that the process spent in kernel mode.
+    #   %U     Total number of CPU-seconds that the process spent in user mode.
+    #   %M     Maximum resident set size of the process during its lifetime, in Kbytes.
+    fmt = "%e %S %U %M"
+    cmd = ['time','-f',fmt,nccopy,'-d',str(level)]
+    if (limited): cmd.append('-u')
+    if (shuffle): cmd.append('-s')
+    if (chunking):
+        cmd.append('-c')
+        cmd.append(chunking)
+    cmd.append(infile)
+    cmd.append(outfile)
+    if (verbose): print (' '.join(cmd))
+    try:
+        output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        return {
+            'outfile' : outfile,
+            'times' : output.split(),
+            'comp_size' : os.path.getsize(outfile),
+            'orig_size' : os.path.getsize(infile),
+            'dlevel' : level,
+            'shuffle' : shuffle,
+            'limited' : limited
+            }
+    except:
+        raise
+
 def run_nccopy(infile,outfile,level,limited,shuffle,chunking=None):
     # The format string for the time command
     #   %e     (Not in tcsh.) Elapsed real time (in seconds).
@@ -155,7 +185,7 @@ def run_nccopy(infile,outfile,level,limited,shuffle,chunking=None):
     except:
         raise
 
-def compress_files(path,files,tmpdir,overwrite,paranoid,maxcompress,level,limited,shuffle):
+def compress_files(path,files,tmpdir,overwrite,maxcompress,level,limited,shuffle):
 
     total_size_new = 0
     total_size_old = 0
@@ -245,8 +275,6 @@ if __name__ == "__main__":
     parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='+')
     args = parser.parse_args()
     
-    paranoid = False if args.maxcompress == 0 else True
-
     verbose=args.verbose
 
     filedict = defaultdict(list)
@@ -285,6 +313,6 @@ if __name__ == "__main__":
         # temporary sub directory.
         for directory in filedict:
             if len(filedict[directory]) == 0: continue
-            compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,paranoid,args.maxcompress,args.dlevel,args.limited,not args.noshuffle)
+            compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,args.limited,not args.noshuffle)
 
                 
