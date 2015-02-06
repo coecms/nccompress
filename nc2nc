@@ -231,12 +231,11 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=4, shuffle=True, fletcher
             for index in np.ndindex(*bufferSteps):
                 index *= bufferChunk
                 slices = []
+                # Make up slices of size bufferChunk
                 for start, step, end in it.izip(index, bufferChunk, dimlim):
-                    # There are two checks in the 2nd pat of the slice, the first
-                    # (min) makes sure we don't go beyond the limits of the variable
-                    # and the second makes sure the slice has at least one element.
-                    # Chunksizes of 1 lead to zero otherwise. 
+                    # min checks we don't go beyond the limits of the variable
                     slices.append(slice(start,min(start+step,end),None))
+                # Copy the data
                 var[slices] = ncvar[slices] 
 
         ncfile_d.sync() # flush data to disk
