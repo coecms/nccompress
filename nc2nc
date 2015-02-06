@@ -57,8 +57,6 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=2):
     chunkSize, which is often a disk block size.
     """
 
-    # import pdb
-
     varShapema = ma.array(varShape)
     
     chunkVals = min(chunkSize / float(valSize),numVals(varShapema)) # ideal number of values in a chunk
@@ -104,7 +102,6 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=2):
         else:
             break
 
-
     # This doesn't work when chunkShape has no masked values. Weird.
     # chunkShapeFinal[chunkShapeFinal.mask] = chunkShape[~chunkShape.mask]
     for i in range(len(chunkShapeFinal)):
@@ -113,154 +110,9 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=2):
 
     return chunkShapeFinal.filled(fill_value=1)
 
-import numpy
-
-from numpy.lib.stride_tricks import as_strided as ast
-
-def norm_shape(shape):
-    '''
-    Normalize numpy array shapes so they're always expressed as a tuple, 
-    even for one-dimensional shapes.
-     
-    Parameters
-        shape - an int, or a tuple of ints
-     
-    Returns
-        a shape tuple
-    '''
-    try:
-        i = int(shape)
-        return (i,)
-    except TypeError:
-        # shape was not a number
-        pass
- 
-    try:
-        t = tuple(shape)
-        return t
-    except TypeError:
-        # shape was not iterable
-        pass
-     
-    raise TypeError('shape must be an int, or a tuple of ints')
- 
-def sliding_window(a,ws,ss = None,flatten = True):
-    '''
-    Return a sliding window over a in any number of dimensions
-     
-    Parameters:
-        a  - an n-dimensional numpy array
-        ws - an int (a is 1D) or tuple (a is 2D or greater) representing the size 
-             of each dimension of the window
-        ss - an int (a is 1D) or tuple (a is 2D or greater) representing the 
-             amount to slide the window in each dimension. If not specified, it
-             defaults to ws.
-        flatten - if True, all slices are flattened, otherwise, there is an 
-                  extra dimension for each dimension of the input.
-     
-    Returns
-        an array containing each n-dimensional window from a
-    '''
-     
-    if None is ss:
-        # ss was not provided. the windows will not overlap in any direction.
-        ss = ws
-    ws = norm_shape(ws)
-    ss = norm_shape(ss)
-     
-    # convert ws, ss, and a.shape to numpy arrays so that we can do math in every 
-    # dimension at once.
-    ws = np.array(ws)
-    ss = np.array(ss)
-    shape = np.array(a.shape)
-     
-    # ensure that ws, ss, and a.shape all have the same number of dimensions
-    ls = [len(shape),len(ws),len(ss)]
-    if 1 != len(set(ls)):
-        raise ValueError(\
-        'a.shape, ws and ss must all have the same length. They were %s' % str(ls))
-     
-    # ensure that ws is smaller than a in every dimension
-    if np.any(ws > shape):
-        raise ValueError(\
-        'ws cannot be larger than a in any dimension.\
- a.shape was %s and ws was %s' % (str(a.shape),str(ws)))
-     
-    # how many slices will there be in each dimension?
-    newshape = norm_shape(((shape - ws) // ss) + 1)
-    # the shape of the strided array will be the number of slices in each dimension
-    # plus the shape of the window (tuple addition)
-    newshape += norm_shape(ws)
-    # the strides tuple will be the array's strides multiplied by step size, plus
-    # the array's strides (tuple addition)
-    newstrides = norm_shape(np.array(a.strides) * ss) + a.strides
-    strided = ast(a,shape = newshape,strides = newstrides)
-    if not flatten:
-        return strided
-     
-    # Collapse strided so that it has one more dimension than the window.  I.e.,
-    # the new array is a flat list of slices.
-    meat = len(ws) if ws.shape else 0
-    firstdim = (np.product(newshape[:-meat]),) if ws.shape else ()
-    dim = firstdim + (newshape[-meat:])
-    # remove any dimensions with size 1
-    dim = filter(lambda i : i != 1,dim)
-    return strided.reshape(dim)
-
-def blockwise_view( a, blockshape, require_aligned_blocks=True ):
-    """
-    Return a 2N-D view of the given N-D array, rearranged so each ND block (tile) 
-    of the original array is indexed by its block address using the first N 
-    indexes of the output array.
-    
-    Args:
-        a: The ND array
-        blockshape: The tile shape
-        require_aligned_blocks: If True, check to make sure no data is "left over" 
-                                in each row/column/etc. of the output view.
-                                That is, the blockshape must divide evenly into the full array shape.
-                                If False, "leftover" items that cannot be made into complete blocks 
-                                will be discarded from the output view.
- 
-    Inspired by the 2D example shown here: http://stackoverflow.com/a/8070716/162094
-    """
-    assert a.flags['C_CONTIGUOUS'], "This function relies on the memory layout of the array."
-    blockshape = tuple(blockshape)
-    view_shape = tuple(numpy.array(a.shape) / blockshape) + blockshape
-
-    if require_aligned_blocks:
-        assert (numpy.mod(a.shape, blockshape) == 0).all(), \
-            "blockshape {} must divide evenly into array shape {}"\
-            .format( blockshape, a.shape )
-
-    # The code below is for the ND case.
-    # For example, in 4D, given shape=(t,z,y,x) and blockshape=(bt,bz,by,bx),
-    # we could have written this:
-    #
-    # intra_block_strides = a.itemsize * numpy.array([z*y*x,    y*x,    x,     1])
-    # inter_block_strides = a.itemsize * numpy.array([z*y*x*bt, y*x*bz, x*by, bx])
-
-    # strides within each block
-    intra_block_strides = [1]
-    for s in a.shape[-1:0:-1]:
-        intra_block_strides.append( s*intra_block_strides[-1] )
-    intra_block_strides = numpy.array(intra_block_strides[::-1])
-    
-    # strides from one block to another
-    inter_block_strides = numpy.array(intra_block_strides) * blockshape
-    
-    intra_block_strides *= a.itemsize
-    inter_block_strides *= a.itemsize
-
-    strides = tuple(inter_block_strides) + tuple(intra_block_strides)
-
-    # This is where the magic happens.
-    # Generate a view with our new strides.
-    return numpy.lib.stride_tricks.as_strided(a, shape=view_shape, strides=strides)
-    
 
 def nc2nc(filename_o, filename_d, zlib=True, complevel=4, shuffle=True, fletcher32=False,
-    clobber=False, lsd_dict=None, uquanta=0, verbose=False, classic=0, vars=None, istart=0, istop=-1, copyBuffer=10000000):
+    clobber=False, lsd_dict=None, verbose=False, classic=0, vars=None, copyBuffer=51200):
     """convert a netcdf file (filename_o) to a netcdf file
     The default format is 'NETCDF4', but can be set
     to NETCDF4_CLASSIC if classic=1.
@@ -280,6 +132,9 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=4, shuffle=True, fletcher
         ncfile_d = Dataset(filename_d,'w',clobber=clobber,format='NETCDF4')
     mval = 1.e30 # missing value if unpackshort=True
 
+    # Copy buffer specified in KB, so convert to bytes
+    copyBuffer = 1024*copyBuffer
+
     # create dimensions. Check for unlimited dim.
     unlimdimname = False
     unlimdim = None
@@ -297,7 +152,6 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=4, shuffle=True, fletcher
             unlimdimname = dimname
             unlimdim = dim
             ncfile_d.createDimension(dimname,None)
-            if istop == -1: istop=len(unlimdim)
         else:
             ncfile_d.createDimension(dimname,len(dim))
 
@@ -322,15 +176,18 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=4, shuffle=True, fletcher
         else:
             lsd = None # no quantization.
         datatype = ncvar.dtype
+
         # is there an unlimited dimension?
         if unlimdimname and unlimdimname in ncvar.dimensions:
             hasunlimdim = True
         else:
             hasunlimdim = False
+
         if hasattr(ncvar, '_FillValue'):
             FillValue = ncvar._FillValue
         else:
             FillValue = None 
+
         chunksizes = None
         # check we have a mapping from the type to a number of bytes
         if ncvar.dtype.char in dtypes: 
@@ -340,19 +197,22 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=4, shuffle=True, fletcher
         else:
             sys.stderr.write("This datatype not supported: dtype : %s\n" % ncvar.dtype.char)
             sys.exit(1)
+
+        # Create the variable we will copy to
         var = ncfile_d.createVariable(varname, datatype, ncvar.dimensions, fill_value=FillValue, least_significant_digit=lsd, zlib=zlib, complevel=complevel, shuffle=shuffle, fletcher32=fletcher32, chunksizes=chunksizes)
         # fill variable attributes.
         attdict = ncvar.__dict__
         if '_FillValue' in attdict: del attdict['_FillValue']
         var.setncatts(attdict)
 
-        # fill variables with data.
+        # fill variable with data.
 
+        dimlim = np.asarray(ncvar.shape)
 
-        dimlim = ncvar.shape
         # bufferChunk is a multiple of the chunksize which is less than the size of copy buffer
-        bufferChunk = chunksizes * int( copyBuffer / (numVals(chunksizes) * dtypes[ncvar.dtype.char]) )   
-    
+        bufferChunk = chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],chunkSize=copyBuffer)
+
+        # Don't bother copying in steps if all our data fits inside the bufferChunk
         if np.all(bufferChunk >= dimlim):
             var[:] = ncvar[:]
         else:
@@ -361,51 +221,26 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=4, shuffle=True, fletcher
             for ind, chunk in enumerate(bufferChunk):
                 if chunk > dimlim[ind]: bufferChunk[ind] = dimlim[ind]
     
-            print 'bufferChunk', bufferChunk
-            # bufferOffsets = int( dimlim / buffChunk )
+            if verbose: sys.stdout.write('Buffer chunk : %s\n' % str(bufferChunk))
 
+            # bufferSteps is the number of copies of bufferChunk that fit along each axis
+            bufferSteps = (dimlim-1)/bufferChunk + 1
+    
             # Make an iterator out of all possible combinations of the bufferOffsets, which
             # are just steps along each dimension
+            for index in np.ndindex(*bufferSteps):
+                index *= bufferChunk
+                slices = []
+                for start, step, end in it.izip(index, bufferChunk, dimlim):
+                    # There are two checks in the 2nd pat of the slice, the first
+                    # (min) makes sure we don't go beyond the limits of the variable
+                    # and the second makes sure the slice has at least one element.
+                    # Chunksizes of 1 lead to zero otherwise. 
+                    slices.append(slice(start,min(start+step,end),None))
+                var[slices] = ncvar[slices] 
 
-            print 'strides',ncvar[:].strides
-            print 'shape',ncvar[:].shape
-
-            origview = sliding_window(ncvar[:], bufferChunk, flatten=True)
-            copyview = sliding_window(var[:], bufferChunk, flatten=True)
-
-            print 'view shape',origview.shape,origview.shape[0]
-
-            # for copy,orig in it.izip(copyview,origview):
-            #     print copy.shape, orig.shape
-            #     copy[:] = orig[:]
-            for i in range(origview.shape[0]):
-                for j in range(origview.shape[1]):
-                    # print i,j,origview[i,j]
-                    copyview[i,j] = origview[i,j]
-                    # print i,j,copyview[i,j]
-
-            print 'max orig',np.amax(origview)
-            print 'max copy',np.amax(copyview)
-            print 'max copy',np.amax(var[:])
-
-            ncfile_d.sync() # flush data to disk
-
-        ## if hasunlimdim: # has an unlim dim, loop over unlim dim index.
-        ##     # range to copy
-        ##     if uquanta:
-        ##         start = istart; stop = istop; step = uquanta
-        ##         if step < 1: step = 1
-        ##         for n in range(start, stop, step):
-        ##             nmax = n+step
-        ##             if nmax > istop: nmax=istop
-        ##             var[n-istart:nmax-istart] = ncvar[n:nmax]
-        ##             ncfile_d.sync()
-        ##     else:
-        ##         print "unlim len: ",len(unlimdim)
-        ##         var[0:len(unlimdim)] = ncvar[:]
-        ## else: # no unlim dim or 1-d variable, just copy all data at once.
-        ##     var[:] = ncvar
         ncfile_d.sync() # flush data to disk
+
     # close files.
     ncfile_o.close()
     ncfile_d.close()
@@ -428,33 +263,17 @@ if __name__ == '__main__':
  --shuffle    - Activate (or disable) the shuffle filter (active by default).
  --fletcher32 - Activate (or disable) the fletcher32 checksum (not active by default).
  --quantize   - Truncate the data in the specified variables to a given decimal precision.
-                For example, 'speed=2, height=-2, temp=0' will cause the variable
-                'speed' to be truncated to a precision of 0.01, 'height' to a precision of 100
-                and 'temp' to 1. This can significantly improve compression. The default
-                is not to quantize any of the variables. (comma separated list of "variable name=integer"
-                pairs)
+                For example, 'speed=2, height=-2, temp=0' will cause the variable 'speed' to be truncated
+                to a precision of 0.01, 'height' to a precision of 100 and 'temp' to 1. This can significantly
+                improve compression. The default is not to quantize any of the variables. (comma separated list
+                of "variable name=integer" pairs)
+ --copybuffer - size of the buffer to use for copying in kB (default: 51200 = 50MB)
  --verbose    - if 1 print diagnostic information.
- --uquanta    - number of records along unlimited dimension to write at once.  Default 10000.
-                Ignored if there is no unlimited dimension.  uquanta=0 means write all the data at once.
- --istart     - number of record to start at along unlimited dimension. 
-                Default 0.  Ignored if there is no unlimited dimension.
- --istop      - number of record to stop at along unlimited dimension. 
-                Default -1.  Ignored if there is no unlimited dimension.
 \n""" % os.path.basename(sys.argv[0])
 
     try:
-        opts, pargs = getopt.getopt(sys.argv[1:], 'ho',
-                                    ['classic=',
-                                     'vars=',
-                                     'zlib=',
-                                     'verbose=',
-                                     'complevel=',
-                                     'shuffle=',
-                                     'fletcher32=',
-                                     'quantize=',
-                                     'uquanta=',
-                                     'istart=',
-                                     'istop='])
+        opts, pargs = getopt.getopt(sys.argv[1:], 'ho', ['classic=', 'vars=', 'zlib=', 'verbose', 'complevel=',
+                                                         'shuffle=', 'fletcher32=', 'copybuffer=','quantize='])
     except:
         (type, value, traceback) = sys.exc_info()
         sys.stdout.write("Error parsing the options. The error was: %s\n" % value)
@@ -471,9 +290,7 @@ if __name__ == '__main__':
     vars = None
     quantize = None
     verbose = 0
-    uquanta = 0
-    istart = 0
-    istop = -1
+    copybuffer = 51200
 
     # Get the options
     for option in opts:
@@ -487,23 +304,19 @@ if __name__ == '__main__':
         elif option[0] == '--zlib':
             zlib = int(option[1])
         elif option[0] == '--verbose':
-            verbose = int(option[1])
+            verbose = 1
         elif option[0] == '--complevel':
             complevel = int(option[1])
         elif option[0] == '--shuffle':
             shuffle = int(option[1])
         elif option[0] == '--fletcher32':
             fletcher32 = int(option[1])
-        elif option[0] == '--uquanta':
-            uquanta = int(option[1])
         elif option[0] == '--vars':
             vars = option[1]
         elif option[0] == '--quantize':
             quantize = option[1]
-        elif option[0] == '--istart':
-            istart = int(option[1])
-        elif option[0] == '--istop':
-            istop = int(option[1])
+        elif option[0] == '--copybuffer':
+            copybuffer = int(option[1])
         else:
             sys.stdout.write("%s: Unrecognized option\n" % option[0])
             sys.stderr.write(usage)
@@ -535,5 +348,4 @@ if __name__ == '__main__':
     # copy the data from filename_o to filename_d.
     nc2nc(filename_o,filename_d, zlib=zlib, complevel=complevel, shuffle=shuffle,
         fletcher32=fletcher32, clobber=overwritefile, lsd_dict=lsd_dict,
-        uquanta=uquanta,verbose=verbose,vars=vars, classic=classic,
-        istart=istart,istop=istop)
+        verbose=verbose,vars=vars, classic=classic, copyBuffer=copybuffer)
