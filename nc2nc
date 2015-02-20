@@ -147,7 +147,7 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=1):
 
 
 def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher32=False,
-    clobber=False, verbose=False, classic=True, lsd_dict=None, vars=None, copyBuffer=51200, mindim=1):
+    clobber=False, verbose=False, classic=True, lsd_dict=None, vars=None, buffersize=51200, mindim=1):
     """convert a netcdf file (filename_o) to another netcdf file (filename_d)
     The default format is 'NETCDF4', but can be set to NETCDF4_CLASSIC if classic=1.
     If the lsd_dict is not None, variable names corresponding to the keys of the dict
@@ -155,17 +155,16 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
     This improves compression by making it 'lossy'..
     If vars is not None, only variable names in the list will be copied (plus all the
     dimension variables). The zlib, complevel and shuffle keywords control
-    how the compression is done. copyBuffer is the size (in KB) of the buffer used to
+    how the compression is done. buffersize is the size (in KB) of the buffer used to
     copy the data from one file to another. mindim sets a minimum size for a dimension
     of a chunk. In some cases very large variable dimensions will mean chunk sizes for
     the smaller dimensions will be small, with a minimum of at least 1. This can lead to
     slow access times.
     """
 
-    
     if os.path.isfile(filename_d) and not clobber:
         sys.stderr.write('Output file already exists: %s. Use -o option to overwrite\n' % filename_d)
-        
+        return False
 
     ncfile_o = Dataset(filename_o,'r')
     if classic:
@@ -175,7 +174,7 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
     mval = 1.e30 # missing value if unpackshort=True
 
     # Copy buffer specified in KB, so convert to bytes
-    copyBuffer = 1024*copyBuffer
+    buffersize = 1024*buffersize
 
     # create dimensions. Check for unlimited dim.
     unlimdimname = False
@@ -252,7 +251,7 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         dimlim = np.asarray(ncvar.shape)
 
         # bufferChunk is a multiple of the chunksize which is less than the size of copy buffer
-        bufferChunk = chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],chunkSize=copyBuffer)
+        bufferChunk = chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],chunkSize=buffersize)
 
         # Don't bother copying in steps if all our data fits inside the bufferChunk
         if np.all(bufferChunk >= dimlim):
@@ -318,7 +317,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run nccopy on a number of netCDF files")
     parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
     parser.add_argument("-m","--mindim", help="Minimum dimension of chunk. Valid values 1-dimsize", type=positive_int, default=1)
-    parser.add_argument("-b","--copybuffer", help="Set size of copy buffer in KB (default=51200)", type=int, default=51200)
+    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in KB (default=51200)", type=int, default=51200)
     parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("-c","--classic", help="use NETCDF4_CLASSIC output instead of NETCDF4 (default true)", action='store_false')
@@ -338,4 +337,4 @@ if __name__ == '__main__':
     # copy the data from origin to destination
     nc2nc(args.origin, args.destination, zlib=zlib, complevel=args.dlevel, shuffle=not args.noshuffle,
         fletcher32=args.fletcher32, clobber=args.overwrite, lsd_dict=args.quantize,
-        verbose=verbose, vars=args.vars, classic=args.classic, copyBuffer=args.copybuffer)
+        verbose=verbose, vars=args.vars, classic=args.classic, buffersize=args.buffersize)

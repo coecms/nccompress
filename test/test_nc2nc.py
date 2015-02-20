@@ -63,10 +63,7 @@ def make_netcdf_files():
     data = ncfile.createVariable('data',dtype('float32').char,('x','y'))
     data.setncattr("Unhidden","test")
     # write data to variable.
-
-    print "First value: ",data_out[0,0]
     data[:] = data_out
-    print "First value: ",data[0,0]
     # close the file.
     ncfile.close()
 
@@ -93,6 +90,9 @@ def test_nc2nc():
     # test setting mindim too large, should complain and set to 32
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,mindim=200)
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,mindim=-1)
+
+    # test copy buffer
+    nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,verbose=False, buffersize=10000)
 
     # quantise the variable to 1 dp
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc_quantised.nc', clobber=True, lsd_dict = {'data':1})
