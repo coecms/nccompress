@@ -179,7 +179,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
         infile = os.path.join(path,file)
         outfile = os.path.join(outdir,file)
 
-        if verbose: sys.stdout.write( "Compressing %s, deflate level = %s, shuffle is on: " % (infile,level,shuffle) )
+        if verbose: sys.stdout.write( "Compressing %s, deflate level = %s, shuffle is on: %s\n" % (infile,level,shuffle) )
 
         # Make sure we're dealing with a netCDF file
         if not is_netCDF(infile):
