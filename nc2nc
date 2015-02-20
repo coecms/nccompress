@@ -2,6 +2,7 @@
 from netCDF4 import Dataset
 import numpy as np
 import numpy.ma as ma
+import os
 import sys
 import math
 import operator
@@ -146,7 +147,7 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=1):
 
 
 def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher32=False,
-    clobber=False, lsd_dict=None, verbose=False, classic=0, vars=None, copyBuffer=51200, mindim=1):
+    clobber=False, verbose=False, classic=True, lsd_dict=None, vars=None, copyBuffer=51200, mindim=1):
     """convert a netcdf file (filename_o) to another netcdf file (filename_d)
     The default format is 'NETCDF4', but can be set to NETCDF4_CLASSIC if classic=1.
     If the lsd_dict is not None, variable names corresponding to the keys of the dict
@@ -160,6 +161,11 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
     the smaller dimensions will be small, with a minimum of at least 1. This can lead to
     slow access times.
     """
+
+    
+    if os.path.isfile(filename_d) and not clobber:
+        sys.stderr.write('Output file already exists: %s. Use -o option to overwrite\n' % filename_d)
+        
 
     ncfile_o = Dataset(filename_o,'r')
     if classic:
@@ -315,7 +321,7 @@ if __name__ == '__main__':
     parser.add_argument("-b","--copybuffer", help="Set size of copy buffer in KB (default=51200)", type=int, default=51200)
     parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
-    parser.add_argument("-c","--classic", help="use NETCDF4_CLASSIC output instead of NETCDF4", action='store_true')
+    parser.add_argument("-c","--classic", help="use NETCDF4_CLASSIC output instead of NETCDF4 (default true)", action='store_false')
     parser.add_argument("-f","--fletcher32", help="Activate Fletcher32 checksum", action='store_true')
     parser.add_argument("-va","--vars", help="Specify variables to copy (default is to copy all)", action='append')
     parser.add_argument("-q","--quantize", help="Truncate data in variable to a given decimal precision, e.g. -q speed=2 -q temp=0 causes variable speed to be truncated to a precision of 0.01 and temp to a precision of 1", action=DictAction)

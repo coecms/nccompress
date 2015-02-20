@@ -4,6 +4,7 @@ import imp
 from netCDF4 import Dataset
 from numpy import array, arange, dtype
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+import os
 
 nc2nc = imp.load_source('nc2nc', "../nc2nc")
 
@@ -40,14 +41,18 @@ def test_chunk_shape_nD():
     # silently ignore and use the variable dimensions
     assert_array_equal( nc2nc.chunk_shape_nD((1,5,5,5),4,4096,12), [1,5,5,5])
 
+ncfiles =['simple_xy.nc']
+
 def make_netcdf_files():
+
+    # os.unlink(ncfiles[0])
 
     # the output array to write will be nx x ny
     nx = 600; ny = 120
     # open a new netCDF file for writing.
     ncfile = Dataset(ncfiles[0],'w') 
     # create the output data.
-    data_out = arange(nx*ny) # 1d array
+    data_out = arange(nx*ny)/100. # 1d array
     data_out.shape = (nx,ny) # reshape to 2d array
     # create the x and y dimensions.
     ncfile.createDimension('x',nx)
@@ -55,13 +60,15 @@ def make_netcdf_files():
     # create the variable (4 byte integer in this case)
     # first argument is name of variable, second is datatype, third is
     # a tuple with the names of dimensions.
-    data = ncfile.createVariable('data',dtype('int32').char,('x','y'))
+    data = ncfile.createVariable('data',dtype('float32').char,('x','y'))
+    data.setncattr("Unhidden","test")
     # write data to variable.
+
+    print "First value: ",data_out[0,0]
     data[:] = data_out
+    print "First value: ",data[0,0]
     # close the file.
     ncfile.close()
-
-ncfiles =['simple_xy.nc']
 
 def test_nc2nc():
 
@@ -75,13 +82,17 @@ def test_nc2nc():
     data = ncfile.variables['data'][:]
     nx,ny = data.shape
     # check the data.
-    data_check = arange(nx*ny) # 1d array
+    data_check = arange(nx*ny)/100. # 1d array
     data_check.shape = (nx,ny) # reshape to 2d array
     # close the file.
     ncfile.close()
 
-    assert_array_equal(data, data_check)
+    # Check data is equal to 2 dp
+    assert_array_almost_equal(data, data_check,2)
     
     # test setting mindim too large, should complain and set to 32
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,mindim=200)
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,mindim=-1)
+
+    # quantise the variable to 1 dp
+    nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc_quantised.nc', clobber=True, lsd_dict = {'data':1})
