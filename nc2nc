@@ -173,8 +173,8 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         ncfile_d = Dataset(filename_d,'w',clobber=clobber,format='NETCDF4')
     mval = 1.e30 # missing value if unpackshort=True
 
-    # Copy buffer specified in KB, so convert to bytes
-    buffersize = 1024*buffersize
+    # Copy buffer specified in MB, so convert to bytes
+    buffersize = 1000000*buffersize
 
     # create dimensions. Check for unlimited dim.
     unlimdimname = False
@@ -314,10 +314,10 @@ if __name__ == '__main__':
             raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
         return ivalue
 
-    parser = argparse.ArgumentParser(description="Run nccopy on a number of netCDF files")
+    parser = argparse.ArgumentParser(description="Run nc2nc (or nccopy) on a number of netCDF files")
     parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
     parser.add_argument("-m","--mindim", help="Minimum dimension of chunk. Valid values 1-dimsize", type=positive_int, default=1)
-    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in KB (default=51200)", type=int, default=51200)
+    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MB (default=50)", type=int, default=50)
     parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("-c","--classic", help="use NETCDF4_CLASSIC output instead of NETCDF4 (default true)", action='store_false')

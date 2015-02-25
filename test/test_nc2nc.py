@@ -92,7 +92,7 @@ def test_nc2nc():
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,mindim=-1)
 
     # test copy buffer
-    nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,verbose=False, buffersize=10000)
+    nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc', clobber=True,verbose=False, buffersize=10)
 
     # quantise the variable to 1 dp
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc_quantised.nc', clobber=True, lsd_dict = {'data':1})
