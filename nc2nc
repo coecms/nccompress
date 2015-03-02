@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+
+"""
+   Copy one netCDF file to another with compression and sensible
+   chunking
+
+   Adapted from nc3tonc4
+
+   https://github.com/Unidata/netcdf4-python/blob/master/utils/nc3tonc4
+
+"""
+
 from netCDF4 import Dataset
 import numpy as np
 import numpy.ma as ma
