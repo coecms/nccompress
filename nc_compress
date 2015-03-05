@@ -228,7 +228,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
             if ( maxcompress != 0 and copydict['orig_size'] > maxcompress*copydict['comp_size'] ):
                 # If the compressed version is less than 1/maxcompress we will
                 # warn and not overwrite the original
-                print("Compression ratio {0} is suspiciously high: {1} not overwritten".format(copydict['orig_size']/copydict['comp_size'],infile))
+                print("Compression ratio {0}, is greater than max compress ratio {1}: {2} not overwritten. Use -m option to change max compress ratio".format(copydict['orig_size']/copydict['comp_size'],maxcompress,infile))
                 skippedlist.append(infile)
                 continue
             
