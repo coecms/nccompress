@@ -19,6 +19,10 @@ def test_is_compressed():
     assert not nc_compress.is_compressed('simple_xy.classic.nc')
 
 def test_is_compressed():
+    retdict = nc_compress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
+    assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
+    assert (retdict['dlevel'] == 3)
+    assert retdict['shuffle']
     retdict = nc_compress.run_nc2nc('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
@@ -26,5 +30,6 @@ def test_is_compressed():
 
 def test_are_equal():
     assert nc_compress.are_equal('simple_xy.nc','simple_xy.run_nc2nc.nc',verbose=True)
+    assert nc_compress.are_equal('simple_xy.run_nc2nc.nc','simple_xy.run_nccopy.nc',verbose=True)
     assert not nc_compress.are_equal('simple_xy.nc','simple_xy.2nc_quantised.nc',verbose=True)
-    os.unlink('simple_xy.run_nc2nc.nc')
+    # os.unlink('simple_xy.run_nc2nc.nc')

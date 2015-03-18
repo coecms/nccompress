@@ -67,89 +67,107 @@ def are_equal(infile,outfile,verbose):
 def run_nc2nc(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunking=None):
     # Check to see if the output file already exists ...
     if os.path.isfile(outfile):
-        if verbose: sys.stdout.write("Output file %s exists: skipping\n" % outfile)
-        return {
-            'outfile' : outfile,
-            'times' : [-1,-1,-1,-1],
-            'comp_size' : os.path.getsize(outfile),
-            'orig_size' : os.path.getsize(infile),
-            'dlevel' : level,
-            'shuffle' : shuffle,
-        }
-    else:
-        # The format string for the time command
-        #   %e     (Not in tcsh.) Elapsed real time (in seconds).
-        #   %S     Total number of CPU-seconds that the process spent in kernel mode.
-        #   %U     Total number of CPU-seconds that the process spent in user mode.
-        #   %M     Maximum resident set size of the process during its lifetime, in Kbytes.
-        fmt = "%e %S %U %M"
-        cmd = [timecmd,'-f',fmt,nc2nc,'-d',str(level)]
-        if (not shuffle): cmd.append('-n')
-        if verbose: cmd.append('-v')
-        if buffersize:
-            cmd.append('-b')
-            # All command line options have to be a string
-            cmd.append(str(buffersize))
-        if chunking:
-            cmd.append('-c')
-            cmd.append(chunking)
-        cmd.append(infile)
-        cmd.append(outfile)
-        try:
-            output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        # Ok, we're going to be paranoid here, because this could be a left over
+        # half compressed file from a previous run. We do not want to copy that
+        # over our data
+        if not are_equal(infile,outfile,verbose):
+            sys.stdout.write("Output file %s exists, but is not the same as the input %s\n" % (outfile,infile))
+            sys.stdout.write("Deleting output and recompressing\n")
+            if os.path.isfile(outfile):
+                os.unlink(outfile)
+        else:
+            if verbose: sys.stdout.write("Output file %s exists: skipping\n" % outfile)
             return {
                 'outfile' : outfile,
-                'times' : output.split(),
-                'comp_size' : os.path.getsize(outfile),
-                'orig_size' : os.path.getsize(infile),
-                'dlevel' : level,
-                'shuffle' : shuffle,
-                }
-        except:
-            raise
-
-def run_nccopy(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunking=None):
-    # Check to see if the output file already exists ...
-    if os.path.isfile(outfile):
-        if verbose: sys.stdout.write("Output file %s exists: skipping\n" % outfile)
-        return {
-            'outfile' : outfile,
-            'times' : [-1,-1,-1,-1],
-            'comp_size' : os.path.getsize(outfile),
-            'orig_size' : os.path.getsize(infile),
-            'dlevel' : level,
-            'shuffle' : shuffle,
-        }
-    else:
-        # The format string for the time command
-        #   %e     (Not in tcsh.) Elapsed real time (in seconds).
-        #   %S     Total number of CPU-seconds that the process spent in kernel mode.
-        #   %U     Total number of CPU-seconds that the process spent in user mode.
-        #   %M     Maximum resident set size of the process during its lifetime, in Kbytes.
-        fmt = "%e %S %U %M"
-        cmd = ['time','-f',fmt,nccopy,'-d',str(level)]
-        if shuffle: cmd.append('-s')
-        if chunking:
-            cmd.append('-c')
-            cmd.append(chunking)
-        if buffersize:
-            cmd.append('-m')
-            cmd.append(str(buffersize*1000000))
-        cmd.append(infile)
-        cmd.append(outfile)
-        if verbose: print (' '.join(cmd))
-        try:
-            output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-            return {
-                'outfile' : outfile,
-                'times' : output.split(),
+                'times' : [-1,-1,-1,-1],
                 'comp_size' : os.path.getsize(outfile),
                 'orig_size' : os.path.getsize(infile),
                 'dlevel' : level,
                 'shuffle' : shuffle,
             }
-        except:
-            raise
+
+    # The format string for the time command
+    #   %e     (Not in tcsh.) Elapsed real time (in seconds).
+    #   %S     Total number of CPU-seconds that the process spent in kernel mode.
+    #   %U     Total number of CPU-seconds that the process spent in user mode.
+    #   %M     Maximum resident set size of the process during its lifetime, in Kbytes.
+    fmt = "%e %S %U %M"
+    cmd = [timecmd,'-f',fmt,nc2nc,'-d',str(level)]
+    if (not shuffle): cmd.append('-n')
+    if verbose: cmd.append('-v')
+    if buffersize:
+        cmd.append('-b')
+        # All command line options have to be a string
+        cmd.append(str(buffersize))
+    if chunking:
+        cmd.append('-c')
+        cmd.append(chunking)
+    cmd.append(infile)
+    cmd.append(outfile)
+    try:
+        output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        return {
+            'outfile' : outfile,
+            'times' : output.split(),
+            'comp_size' : os.path.getsize(outfile),
+            'orig_size' : os.path.getsize(infile),
+            'dlevel' : level,
+            'shuffle' : shuffle,
+            }
+    except:
+        raise
+
+def run_nccopy(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunking=None):
+    # Check to see if the output file already exists ...
+    if os.path.isfile(outfile):
+        # Ok, we're going to be paranoid here, because this could be a left over
+        # half compressed file from a previous run. We do not want to copy that
+        # over our data
+        if not are_equal(infile,outfile,verbose):
+            sys.stdout.write("Output file %s exists, but is not the same as the input %s\n" % (outfile,infile))
+            sys.stdout.write("Deleting output and recompressing\n")
+            if os.path.isfile(outfile):
+                os.unlink(outfile)
+        else:
+            if verbose: sys.stdout.write("Output file %s exists: skipping\n" % outfile)
+            return {
+                'outfile' : outfile,
+                'times' : [-1,-1,-1,-1],
+                'comp_size' : os.path.getsize(outfile),
+                'orig_size' : os.path.getsize(infile),
+                'dlevel' : level,
+                'shuffle' : shuffle,
+            }
+    
+    # The format string for the time command
+    #   %e     (Not in tcsh.) Elapsed real time (in seconds).
+    #   %S     Total number of CPU-seconds that the process spent in kernel mode.
+    #   %U     Total number of CPU-seconds that the process spent in user mode.
+    #   %M     Maximum resident set size of the process during its lifetime, in Kbytes.
+    fmt = "%e %S %U %M"
+    cmd = ['time','-f',fmt,nccopy,'-d',str(level)]
+    if shuffle: cmd.append('-s')
+    if chunking:
+        cmd.append('-c')
+        cmd.append(chunking)
+    if buffersize:
+        cmd.append('-m')
+        cmd.append(str(buffersize*1000000))
+    cmd.append(infile)
+    cmd.append(outfile)
+    if verbose: print (' '.join(cmd))
+    try:
+        output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        return {
+            'outfile' : outfile,
+            'times' : output.split(),
+            'comp_size' : os.path.getsize(outfile),
+            'orig_size' : os.path.getsize(infile),
+            'dlevel' : level,
+            'shuffle' : shuffle,
+        }
+    except:
+        raise
 
 def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,clean,verbose,buffersize,nccopy,paranoid):
 
