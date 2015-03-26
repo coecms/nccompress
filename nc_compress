@@ -36,7 +36,7 @@ def is_compressed(ncfile):
     """
     tmp = nc.Dataset(ncfile)
     compressed=False
-    # Classic files have no filters attribute, and no compression
+    # netCDF3 files have no filters attribute, and no compression
     # should use data_model instead of file_format in future
     if not tmp.file_format.startswith("NETCDF3"):
         for varname in tmp.variables:

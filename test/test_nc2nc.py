@@ -50,7 +50,7 @@ def make_netcdf_files():
     # the output array to write will be nx x ny
     nx = 600; ny = 120
     # open a new netCDF file for writing.
-    ncfile = Dataset(ncfiles[0],'w') 
+    ncfile = Dataset(ncfiles[0],'w',format="NETCDF4_CLASSIC") 
     # create the output data.
     data_out = arange(nx*ny)/100. # 1d array
     data_out.shape = (nx,ny) # reshape to 2d array
@@ -96,3 +96,13 @@ def test_nc2nc():
 
     # quantise the variable to 1 dp
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc_quantised.nc', clobber=True, lsd_dict = {'data':1})
+
+    # Make a netCDF4 version
+    nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc4',clobber=True,classic=False)
+    
+    try:
+        nc2nc.nc2nc(ncfiles[0]+'2nc.nc4',ncfiles[0]+'2nc.2.nc4',clobber=True,classic=False)
+    except nc2nc.FormatError:
+        pass
+
+    nc2nc.nc2nc(ncfiles[0]+'2nc.nc4',ncfiles[0]+'2nc.2.nc4',clobber=True,classic=False,ignoreformat=True)

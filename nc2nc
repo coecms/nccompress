@@ -18,6 +18,7 @@ import sys
 import math
 import operator
 import itertools as it
+from warnings import warn
 
 dtypes = {
     'f' : 4, # f4, 32-bit floating point
@@ -33,6 +34,9 @@ dtypes = {
     'L' : 8, # u8, 64-bit unsigned integer
     'S' : 1 }  # S1, single-character string
 
+class FormatError(Exception):
+    '''Unsupported netCDF format'''
+    
 def numVals(shape):
     """Return number of values in chunk of specified shape, given by a list of dimension lengths.
 
@@ -158,9 +162,9 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=1):
 
 
 def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher32=False,
-    clobber=False, verbose=False, classic=True, lsd_dict=None, vars=None, buffersize=51200, mindim=1):
+    clobber=False, verbose=False, classic=True, lsd_dict=None, vars=None, buffersize=51200, mindim=1,ignoreformat=False):
     """convert a netcdf file (filename_o) to another netcdf file (filename_d)
-    The default format is 'NETCDF4', but can be set to NETCDF4_CLASSIC if classic=1.
+    The default format is 'NETCDF4_classic', but can be set to NETCDF4 if classic=False.
     If the lsd_dict is not None, variable names corresponding to the keys of the dict
     will be truncated to the decimal place specified by the values of the dict.
     This improves compression by making it 'lossy'..
@@ -178,6 +182,13 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         return False
 
     ncfile_o = Dataset(filename_o,'r')
+
+    if ncfile_o.file_format is "NETCDF4":
+        if ignoreformat:
+            warn('netCDF4 formatted file .. ignoring')
+        else:
+            raise FormatError('nc2nc is not tested to work with netCDF4 files, only netCDF4 Classic, and netCDF3. See --ignoreformat option to ignore warning')
+        
     if classic:
         ncfile_d = Dataset(filename_d,'w',clobber=clobber,format='NETCDF4_CLASSIC')
     else:
@@ -325,7 +336,7 @@ if __name__ == '__main__':
             raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
         return ivalue
 
-    parser = argparse.ArgumentParser(description="Run nc2nc (or nccopy) on a number of netCDF files")
+    parser = argparse.ArgumentParser(description="Make a copy of a netCDF file with automatic chunk sizing")
     parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
     parser.add_argument("-m","--mindim", help="Minimum dimension of chunk. Valid values 1-dimsize", type=positive_int, default=1)
     parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MB (default=50)", type=int, default=50)
@@ -336,6 +347,7 @@ if __name__ == '__main__':
     parser.add_argument("-va","--vars", help="Specify variables to copy (default is to copy all)", action='append')
     parser.add_argument("-q","--quantize", help="Truncate data in variable to a given decimal precision, e.g. -q speed=2 -q temp=0 causes variable speed to be truncated to a precision of 0.01 and temp to a precision of 1", action=DictAction)
     parser.add_argument("-o","--overwrite", help="Write output file even if already it exists (default is to not overwrite)", action='store_true')
+    parser.add_argument("-i","--ignoreformat", help="Ignore warnings about netCDF4 formatted file: BE CAREFUL! (default false)", action='store_true')
     parser.add_argument("origin", help="netCDF file to be compressed")
     parser.add_argument("destination", help="netCDF output file")
     args = parser.parse_args()
@@ -348,4 +360,4 @@ if __name__ == '__main__':
     # copy the data from origin to destination
     nc2nc(args.origin, args.destination, zlib=zlib, complevel=args.dlevel, shuffle=not args.noshuffle,
         fletcher32=args.fletcher32, clobber=args.overwrite, lsd_dict=args.quantize,
-        verbose=verbose, vars=args.vars, classic=args.classic, buffersize=args.buffersize)
+        verbose=verbose, vars=args.vars, classic=args.classic, buffersize=args.buffersize, ignoreformat=args.ignoreformat)
