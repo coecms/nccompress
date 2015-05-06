@@ -12,6 +12,8 @@ import math
 import operator
 import numpy as np
 import numpy.ma as ma
+import multiprocessing as mp
+
 
 # A couple of hard-wired executable paths that might need changing
 
@@ -78,12 +80,14 @@ def run_nc2nc(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunkin
         else:
             if verbose: sys.stdout.write("Output file %s exists: skipping\n" % outfile)
             return {
+                'infile' : infile,
                 'outfile' : outfile,
                 'times' : [-1,-1,-1,-1],
                 'comp_size' : os.path.getsize(outfile),
                 'orig_size' : os.path.getsize(infile),
                 'dlevel' : level,
                 'shuffle' : shuffle,
+                'error' : False,
             }
 
     # The format string for the time command
@@ -94,7 +98,7 @@ def run_nc2nc(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunkin
     fmt = "%e %S %U %M"
     cmd = [timecmd,'-f',fmt,nc2nc,'-d',str(level)]
     if (not shuffle): cmd.append('-n')
-    if verbose: cmd.append('-v')
+    # if verbose: cmd.append('-v')
     if buffersize:
         cmd.append('-b')
         # All command line options have to be a string
@@ -107,15 +111,21 @@ def run_nc2nc(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunkin
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
         return {
+            'infile' : infile,
             'outfile' : outfile,
             'times' : output.split(),
             'comp_size' : os.path.getsize(outfile),
             'orig_size' : os.path.getsize(infile),
             'dlevel' : level,
             'shuffle' : shuffle,
+            'error' : False,
             }
     except:
-        raise
+        return {
+            'infile' : infile,
+            'outfile' : outfile,
+            'error' : True,
+            }
 
 def run_nccopy(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunking=None):
     # Check to see if the output file already exists ...
@@ -131,12 +141,14 @@ def run_nccopy(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunki
         else:
             if verbose: sys.stdout.write("Output file %s exists: skipping\n" % outfile)
             return {
+                'infile' : infile,
                 'outfile' : outfile,
                 'times' : [-1,-1,-1,-1],
                 'comp_size' : os.path.getsize(outfile),
                 'orig_size' : os.path.getsize(infile),
                 'dlevel' : level,
                 'shuffle' : shuffle,
+                'error' : False,
             }
     
     # The format string for the time command
@@ -159,22 +171,41 @@ def run_nccopy(infile,outfile,level,shuffle,verbose=False,buffersize=None,chunki
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
         return {
+            'infile' : infile,
             'outfile' : outfile,
             'times' : output.split(),
             'comp_size' : os.path.getsize(outfile),
             'orig_size' : os.path.getsize(infile),
             'dlevel' : level,
             'shuffle' : shuffle,
+            'error' : False,
         }
     except:
-        raise
+        return {
+            'infile' : infile,
+            'outfile' : outfile,
+            'error' : True,
+            }
 
-def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,clean,verbose,buffersize,nccopy,paranoid):
+result_list=[]
+
+def log_result(result):
+    # Not strictly required, but makes it explicit
+    global result_list
+    result_list.append(result)
+    
+def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,clean,verbose,buffersize,nccopy,paranoid,numproc):
 
     total_size_new = 0
     total_size_old = 0
     total_files = 0
     skippedlist = []
+    jobs = []
+
+    global result_list
+    result_list[:] = []
+
+    pool = mp.Pool(processes=numproc)
 
     # Create our temporary directory
     outdir = os.path.join(path,tmpdir)
@@ -219,14 +250,23 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
                 continue
 
         # Try compressing the data
-        try:
-            if (nccopy):
-                copydict = run_nccopy(infile,outfile,level,shuffle,verbose,buffersize)
-            else:
-                copydict = run_nc2nc(infile,outfile,level,shuffle,verbose,buffersize)
-        except:
-            sys.stdout.write("Something went wrong with  %s \n" % file)
-            skippedlist.append(file)
+        if (nccopy):
+            pool.apply_async(run_nccopy, args=(infile,outfile,level,shuffle,verbose,buffersize), callback=log_result)
+        else:
+            pool.apply_async(run_nc2nc, args=(infile,outfile,level,shuffle,verbose,buffersize), callback=log_result)
+
+    pool.close()
+    pool.join()
+
+    for result in result_list:
+
+        # print result
+        infile = result['infile']
+        outfile = result['outfile']
+
+        if result['error']:
+            sys.stdout.write("Something went wrong with  %s \n" % infile)
+            skippedlist.append(infile)
             # Go to next file .. so original will not be overwritten
             continue
 
@@ -243,24 +283,24 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
             # Serious. We're going to blow away the original file with
             # the compressed version -- do some sanity checks to make
             # sure we're not copying rubbish over our data
-            if ( maxcompress != 0 and copydict['orig_size'] > maxcompress*copydict['comp_size'] ):
+            if ( maxcompress != 0 and result['orig_size'] > maxcompress*result['comp_size'] ):
                 # If the compressed version is less than 1/maxcompress we will
                 # warn and not overwrite the original
-                print("Compression ratio {0}, is greater than max compress ratio {1}: {2} not overwritten. Use -m option to change max compress ratio".format(copydict['orig_size']/copydict['comp_size'],maxcompress,infile))
+                print("Compression ratio {0}, is greater than max compress ratio {1}: {2} not overwritten. Use -m option to change max compress ratio".format(result['orig_size']/result['comp_size'],maxcompress,infile))
                 skippedlist.append(infile)
                 continue
             
             move(outfile,infile)
 
-        total_size_new += copydict['comp_size']
-        total_size_old += copydict['orig_size']
+        total_size_new += result['comp_size']
+        total_size_old += result['orig_size']
         total_files = total_files + 1
 
         if verbose:
             print("{} d = {} Shuffle: {:d} {} s {} s {} s Mem: {} KB {} B {:0.4}".format(
                 file, level, shuffle, 
-                copydict['times'][0], copydict['times'][1], copydict['times'][2],
-                copydict['times'][3], copydict['comp_size'], float(copydict['orig_size'])/float(copydict['comp_size'])))
+                result['times'][0], result['times'][1], result['times'][2],
+                result['times'][3], result['comp_size'], float(result['orig_size'])/float(result['comp_size'])))
 
     # Make a nice human readable number from the total amount of space we've saved
     total_space_saved = float(total_size_old-total_size_new)
@@ -307,11 +347,22 @@ if __name__ == "__main__":
     parser.add_argument("-p","--paranoid", help="Paranoid check : run nco ndiff on the resulting file ensure no data has been altered", action='store_true')
     parser.add_argument("-f","--force", help="Force compression, even if input file is already compressed (default False)", action='store_true')
     parser.add_argument("-c","--clean", help="Clean tmpdir by removing existing compressed files before starting (default False)", action='store_true')
+    parser.add_argument("-pa","--parallel", help="Compress files in parallel", action='store_true')
+    parser.add_argument("-np","--numproc", help="Specify the number of processes to use in parallel operation", type=int, default=1)
     parser.add_argument("--nccopy", help="Use nccopy instead of nc2nc (default False)", action='store_true')
     parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='+')
     args = parser.parse_args()
     
     verbose=args.verbose
+
+    # We won't make users specify parallel if they've specified a number of processors
+    if args.numproc: args.parallel = True
+
+    if args.parallel:
+        if args.numproc is not None:
+            numproc = args.numproc
+        else:
+            numproc = mp.cpu_count()
 
     filedict = defaultdict(list)
 
@@ -349,6 +400,6 @@ if __name__ == "__main__":
         # temporary sub directory.
         for directory in filedict:
             if len(filedict[directory]) == 0: continue
-            compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid)
+            compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid,numproc)
 
                 
