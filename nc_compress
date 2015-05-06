@@ -207,6 +207,8 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
 
     pool = mp.Pool(processes=numproc)
 
+    copyprog = run_nccopy if nccopy else run_nc2nc
+
     # Create our temporary directory
     outdir = os.path.join(path,tmpdir)
     if not os.path.isdir(outdir):
@@ -250,10 +252,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
                 continue
 
         # Try compressing the data
-        if (nccopy):
-            pool.apply_async(run_nccopy, args=(infile,outfile,level,shuffle,verbose,buffersize), callback=log_result)
-        else:
-            pool.apply_async(run_nc2nc, args=(infile,outfile,level,shuffle,verbose,buffersize), callback=log_result)
+        pool.apply_async(copyprog, args=(infile,outfile,level,shuffle,verbose,buffersize), callback=log_result)
 
     pool.close()
     pool.join()
