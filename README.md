@@ -2,6 +2,8 @@
 
 The nccompress package consists of three python programs, ncfind, nc2nc and nc_compress. nc2nc can copy netCDF files with compression and an optimised chunking strategy that has reasonable performance for many datasets. This two main limitations: it is slower than some other programs, and it can only compress netCDF3 or netCDF4 classic format. There is more detail in the following sections.
 
+The convenience utility ncinfo is also included, and though it has no direct relevance to compression, it is a convenient way to get a summary of the contents of a netCDF file.
+
 ##Identifying files to be compressed
 
 ncfind, part of the nccompress package, can be used to find netCDF files and discriminate between compressed and uncompressed:
@@ -60,7 +62,6 @@ find directoryname -iname "*.nc" | ncfind -u
 
 
 ##Batch Compressing files
-[[#nc_compress]]
 Having identified where the netCDF files you wish to compress are located, there is a convenience program, nc_compress, which can be used to easily step through and compress each file in turn:
 ```
 $ ./nc_compress -h
@@ -196,3 +197,116 @@ optional arguments:
                         is to not overwrite)
 ```
 With the vars option (-va) it is possible to select out only a subset of variables to be copied to the destination file. By default the output file is netCDf4 classic, but this can be changed to netCDF4 using the '-c' option. It is also possible to specify a minimum dimension size for the chunks (-m). This may be desirable for a dataset that has one particularly long dimension,. The chunk dimensions would mirror this and be very large in this direction . If fast access is required from slices orthogonal to this direction performance might be improved setting this option to a number greater than 1.
+
+##ncinfo
+
+ncinfo is a convenient way to get a summary of the contents of a netCDF file.
+```
+./ncinfo -h
+usage: ncinfo [-h] [-v] [-t] [-d] [-a] [-va VARS] inputs [inputs ...]
+
+Output summary information about a netCDF file
+
+positional arguments:
+  inputs                netCDF files
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         Verbose output
+  -t, --time            Show time variables
+  -d, --dims            Show dimensions
+  -a, --aggregate       Aggregate multiple netCDF files into one dataset
+  -va VARS, --vars VARS
+                        Show info for only specify variables
+
+```
+By default it prints out a simple summary of the variables in a netCDF file, but omitting dimensions and time related variables. e.g.
+```
+ncinfo output096/ocean_daily.nc
+
+output096/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+geolon_t :: (1080, 1440)      :: tracer longitude
+geolat_t :: (1080, 1440)      :: tracer latitude
+geolon_c :: (1080, 1440)      :: uv longitude
+geolat_c :: (1080, 1440)      :: uv latitude
+
+```
+If you specify more than one file it will print the information for each file in turn
+```
+ncinfo output09?/ocean_daily.nc
+
+output096/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+geolon_t :: (1080, 1440)      :: tracer longitude
+geolat_t :: (1080, 1440)      :: tracer latitude
+geolon_c :: (1080, 1440)      :: uv longitude
+geolat_c :: (1080, 1440)      :: uv latitude
+
+output097/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+geolon_t :: (1080, 1440)      :: tracer longitude
+geolat_t :: (1080, 1440)      :: tracer latitude
+geolon_c :: (1080, 1440)      :: uv longitude
+geolat_c :: (1080, 1440)      :: uv latitude
+
+output098/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+geolon_t :: (1080, 1440)      :: tracer longitude
+geolat_t :: (1080, 1440)      :: tracer latitude
+geolon_c :: (1080, 1440)      :: uv longitude
+geolat_c :: (1080, 1440)      :: uv latitude
+
+output099/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+geolon_t :: (1080, 1440)      :: tracer longitude
+geolat_t :: (1080, 1440)      :: tracer latitude
+geolon_c :: (1080, 1440)      :: uv longitude
+geolat_c :: (1080, 1440)      :: uv latitude
+```
+If the files have the same structure it is possible to aggregate the data and display it as if it were contained in a single dataset:
+```
+ncinfo -a output09?/ocean_daily.nc
+
+Time steps:  1460  x  1.0 days
+tau_x    :: (1460, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y    :: (1460, 1080, 1440) :: j-directed wind stress forcing v-velocity
+geolon_t :: (1080, 1440)       :: tracer longitude
+geolat_t :: (1080, 1440)       :: tracer latitude
+geolon_c :: (1080, 1440)       :: uv longitude
+geolat_c :: (1080, 1440)       :: uv latitude
+```
+You can also just request variables you are interested in to be output:
+```
+ncinfo -va tau_x -va tau_y output09?/ocean_daily.nc 
+
+output096/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+
+output097/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+
+output098/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+
+output099/ocean_daily.nc
+Time steps:  365  x  1.0 days
+tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+```
