@@ -205,7 +205,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
     global result_list
     result_list[:] = []
 
-    pool = mp.Pool(processes=numproc)
+    pool = mp.Pool(processes=numproc,maxtasksperchild=50)
 
     copyprog = run_nccopy if nccopy else run_nc2nc
 
