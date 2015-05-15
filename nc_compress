@@ -372,33 +372,36 @@ if __name__ == "__main__":
             print ("Input does not exist: {} .. skipping".format(ncinput))
             continue
         if os.path.isdir(ncinput):
+            # Check that we haven't been here already
+            if ncinput in filedict: continue
             # os.walk will return the entire directory structure
             for root, dirs, files in os.walk(ncinput):
                 # Ignore emtpy directories, and our own temp directory, in case we
                 # re-run on same tree
                 if len(files) == 0: continue
                 if root.endswith(args.tmpdir): continue
+                # Check that we haven't been here already
+                if root in filedict: continue
                 # Only descend into subdirs if we've set the recursive flag
                 if (root != ncinput and not args.recursive):
-                    print("Skipping subdirectory {0} :: --recursive option not specified".format(root))
-                    continue
+                    print("Skipping subdirectories of {0} :: --recursive option not specified".format(ncinput))
+                    break
                 else:
-                    # Group by directory
-                    filedict[root].extend(files)
+                    # Compress all the files in this directory
+                    compress_files(root,files,args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid,numproc)
+                    # Note we've traversed this directory but set directory to an empty list
+                    filedict[root] = []
         else:
             (root,file) = os.path.split(ncinput)
             if (root == ''): root = "./"
             filedict[root].append(file)
 
-    if len(filedict) == 0:
-        print "No files found to process"
-    else:
-        # Compress files directory by directory. We only create a temporary directory once,
-        # and can then clean up after ourselves. Also makes it easier to run some checks to
-        # ensure compression is ok, as all the files are named the same, just in a separate
-        # temporary sub directory.
-        for directory in filedict:
-            if len(filedict[directory]) == 0: continue
-            compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid,numproc)
+    # Files that were specified directly on the command line are compressed by directory.
+    # We only create a temporary directory once, and can then clean up after ourselves.
+    # Also makes it easier to run some checks to ensure compression is ok, as all the files
+    # are named the same, just in a separate temporary sub directory.
+    for directory in filedict:
+        if len(filedict[directory]) == 0: continue
+        compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid,numproc)
 
                 
