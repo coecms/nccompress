@@ -102,7 +102,7 @@ def nccopy_cmd(infile,outfile,level,shuffle,verbose,buffersize,timing):
         #   %M     Maximum resident set size of the process during its lifetime, in Kbytes.
         fmt = "%e %S %U %M"
         cmd.extend([timecmd,'-f',fmt])
-    cmd.extend([nc2nc,'-d',str(level)])
+    cmd.extend([nccopy,'-d',str(level)])
     if shuffle: cmd.append('-s')
     if buffersize:
         cmd.append('-m')
