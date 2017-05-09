@@ -255,7 +255,7 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         # check we have a mapping from the type to a number of bytes
         if ncvar.dtype.char in dtypes: 
             if verbose: sys.stdout.write('Variable shape: %s\n' % str(ncvar.shape))
-            chunksizes=chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],minDim=mindim)
+            if (ncvar.shape != ()): chunksizes=chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],minDim=mindim)
             if verbose: sys.stdout.write('Chunk sizes: %s\n' % str(chunksizes))
         else:
             sys.stderr.write("This datatype not supported: dtype : %s\n" % ncvar.dtype.char)
@@ -273,10 +273,10 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         dimlim = np.asarray(ncvar.shape)
 
         # bufferChunk is a multiple of the chunksize which is less than the size of copy buffer
-        bufferChunk = chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],chunkSize=buffersize)
+        if (ncvar.shape != ()): bufferChunk = chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],chunkSize=buffersize)
 
         # Don't bother copying in steps if all our data fits inside the bufferChunk
-        if np.all(bufferChunk >= dimlim):
+        if ncvar.shape == () or np.all(bufferChunk >= dimlim):
             var[:] = ncvar[:]
         else:
 
