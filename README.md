@@ -1,10 +1,10 @@
-#nccompress
+# nccompress
 
 The nccompress package consists of three python programs, ncfind, nc2nc and nc_compress. nc2nc can copy netCDF files with compression and an optimised chunking strategy that has reasonable performance for many datasets. This two main limitations: it is slower than some other programs, and it can only compress netCDF3 or netCDF4 classic format. There is more detail in the following sections.
 
 The convenience utility ncinfo is also included, and though it has no direct relevance to compression, it is a convenient way to get a summary of the contents of a netCDF file.
 
-##Identifying files to be compressed
+## Identifying files to be compressed
 
 ncfind, part of the nccompress package, can be used to find netCDF files and discriminate between compressed and uncompressed:
 
@@ -61,7 +61,7 @@ find directoryname -iname "*.nc" | ncfind -u
 ```
 
 
-##Batch Compressing files
+## Batch Compressing files
 Having identified where the netCDF files you wish to compress are located, there is a convenience program, nc_compress, which can be used to easily step through and compress each file in turn:
 ```
 $ ./nc_compress -h
@@ -154,7 +154,7 @@ nc_compress -r -o -np 16 run[1-5]/output*/ocean*.nc random.nc ice*.nc
 ``` 
 will compress 16 netCDF files at a time (the -np option implies parallel option). As each directory is processed before beginning on a new directory there will be little reduction in execution time if there are few netCDF files in each directory.
 
-##nc2nc
+## nc2nc
 
 The nc2nc program was written because no existing tool had a generalised per variable chunking algorithm. The total chunk size is defined to be the file system block size (4096KB). The dimensions of the chunk are sized to be as close as possible to the same ratio as the dimensions of the data, with the limits that no dimension can be less than 1. This chunking scheme performs well for a wide range of data, but there will always be cases for certain types of access, or variable shape that this is not optimal. In those cases a different approach may be required.
 
@@ -198,7 +198,7 @@ optional arguments:
 ```
 With the vars option (-va) it is possible to select out only a subset of variables to be copied to the destination file. By default the output file is netCDf4 classic, but this can be changed to netCDF4 using the '-c' option. It is also possible to specify a minimum dimension size for the chunks (-m). This may be desirable for a dataset that has one particularly long dimension,. The chunk dimensions would mirror this and be very large in this direction . If fast access is required from slices orthogonal to this direction performance might be improved setting this option to a number greater than 1.
 
-##ncinfo
+## ncinfo
 
 ncinfo is a convenient way to get a summary of the contents of a netCDF file.
 ```
