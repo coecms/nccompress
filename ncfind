@@ -88,7 +88,7 @@ if __name__ == "__main__":
         # print '|',ncinput,'|'
         ncinput = ncinput.rstrip('\r\n')
         if not os.path.exists(ncinput):
-            print ("Input does not exist: {} .. skipping".format(ncinput))
+            sys.stderr.write("Input does not exist: {} .. skipping\n".format(ncinput))
             continue
         if os.path.isdir(ncinput):
             # os.walk will return the entire directory structure
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 # if root.endswith(args.tmpdir): continue
                 # Only descend into subdirs if we've set the recursive flag
                 if (root != ncinput and not args.recursive):
-                    print("Skipping subdirectories :: --recursive option not specified")
+                    sys.stderr.write("Skipping subdirectories :: --recursive option not specified\n")
                     break
                 else:
                     # Group by directory
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     nuncompressed = 0
     
     if len(filedict) == 0:
-        print "No files found to process"
+        sys.stderr.write("No files found to process\n")
     else:
         # We only create a temporary directory once,
         # and can then clean up after ourselves. Also makes it easier to run some checks to
@@ -128,7 +128,7 @@ if __name__ == "__main__":
                 if isnetCDF:
                     if iscompressed:
                         ncompressed += 1
-                        if findcompressed: print filepath
+                        if findcompressed: sys.stdout.write(filepath+"\n")
                     else:
                         nuncompressed += 1
-                        if finduncompressed: print filepath
+                        if finduncompressed: sys.stdout.write(filepath+"\n")
