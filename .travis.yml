@@ -11,7 +11,7 @@ env:
   global:
     - PYTHONPATH=$PYTHONPATH:..:.
 script:
-    - py.test
+    - py.test -s
 after_success:
     - coverage run --source=n2nc,nc_compress,test/test_nc2nc.py,test/test_nc_compress.py -m py.test
     - codecov
