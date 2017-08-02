@@ -21,7 +21,7 @@ from numpy import array, arange, dtype
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import sys
 import os
-from utils import make_simple_netcdf_file, remove_ncfiles
+from utils import make_simple_netcdf_file, remove_ncfiles, which
 
 verbose = True
 
@@ -49,6 +49,10 @@ def test_is_compressed():
     assert not nc_compress.is_compressed('simple_xy.classic.nc')
 
 def test_is_compressed():
+
+    if which('nccopy') is None:
+        print("Could not find nccopy in path")
+        assert(False)
     # retdict = nc_compress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
     retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True)
     print(retdict)
