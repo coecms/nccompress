@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+
+"""
+Copyright 2015 ARC Centre of Excellence for Climate Systems Science
+
+author: Aidan Heerdegen <aidan.heerdegen@anu.edu.au>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 import subprocess
 import os
 import sys
@@ -120,19 +139,21 @@ def check_and_overwrite(state,verbose,maxcompress):
     if ( maxcompress != 0 and state['orig_size'] > maxcompress*state['comp_size'] ):
         # If the compressed version is less than 1/maxcompress we will
         # warn and not overwrite the original
-        print("Compression ratio {0}, is greater than max compress ratio {1}: {2} not overwritten. Use -m option to change max compress ratio".format(state['orig_size']/state['comp_size'],maxcompress,state['infile']))
-        state['error'] = True
+        if (verbose):
+            print("Compression ratio {0}, is greater than max compress ratio {1}: {2} not overwritten. Use -m option to change max compress ratio".format(state['orig_size']/state['comp_size'],maxcompress,state['infile']))
+        state['error'] = "Max compress exceeded: {0}".format(state['orig_size']/state['comp_size'])
     else:
         # Overwrite original with compressed version
         if verbose: print("Overwriting {0}".format(state['infile']))
         try:
             move(state['outfile'],state['infile'])
         except Exception, e:
-            state['error'] = True
+            state['error'] = "Failed to overwrite original file"
         else:
             state['error'] = False
 
-def run_compress(infile,outfile,level,shuffle,verbose,buffersize,paranoid,overwrite,nccopy,maxcompress,timing):
+def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,buffersize=50,paranoid=False,
+                 overwrite=False,nccopy=False,maxcompress=10,timing=False):
 
     # Initialise state container
     state = {
@@ -175,13 +196,13 @@ def run_compress(infile,outfile,level,shuffle,verbose,buffersize,paranoid,overwr
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
     except:
-        state['error'] =  True
+        state['error'] = "Compression failed"
     else:
         state['times'] =  output.split()
         state['comp_size'] = os.path.getsize(outfile)
         if paranoid and not are_equal(infile,outfile,verbose):
             sys.stdout.write("%s is not the same as %s \n" % (infile,outfile))
-            state['error'] = True
+            state['error'] = "Compressed file is not the same as original"
         elif overwrite:
             # Perform checks on compressed data, return result in state. Need to make
             # this into an object ...
@@ -262,7 +283,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
         outfile = result['outfile']
 
         if result['error']:
-            sys.stdout.write("Something went wrong with  %s \n" % infile)
+            sys.stdout.write("Error with %s :: %s \n" % (infile, result['error']))
             skippedlist.append(infile)
             # Go to next file .. we won't count this one in our summary stats
             continue
@@ -297,12 +318,13 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
         print("    Average compression ratio: {0:.2f}").format(float(total_size_old)/total_size_new)
     if len(skippedlist) > 0:
         print("    Following files not properly compressed or suspiciously high compression ratio:")
-        print ("\n").join(skippedlist)
+        print (", ").join(skippedlist)
 
-    try:
-        os.rmdir(outdir)
-    except OSError:
-        print("Failed to remove temporary directory {}".format(outdir))
+    if overwrite:
+        try:
+            os.rmdir(outdir)
+        except OSError:
+            print("Failed to remove temporary directory {}".format(outdir))
 
 if __name__ == "__main__":
 

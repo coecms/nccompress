@@ -1,0 +1,15 @@
+language: python
+python:
+    - '2.7'
+before_install:
+    - pip install codecov
+install:
+    - pip install --upgrade pytest numpy netCDF4
+env:
+  global:
+    - PYTHONPATH=$PYTHONPATH:..:.
+script:
+    - py.test test/test_mdsspath.py
+after_success:
+    - coverage run --source=mdssdiff.py,mdsspath.py,test/test_mdsspath.py -m py.test
+    - codecov

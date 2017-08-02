@@ -14,13 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from __future__ import print_function
+
+import pytest
 import imp
 from netCDF4 import Dataset
 from numpy import array, arange, dtype
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import os
+from utils import make_simple_netcdf_file, remove_ncfiles
 
-nc2nc = imp.load_source('nc2nc', "../nc2nc")
+verbose = True
+
+# Test is run from directory above this one, location of the source file
+nc2nc = imp.load_source('nc2nc', "nc2nc")
+
+ncfiles =['simple_xy.nc']
+
+def setup_module(module):
+    if verbose: print ("setup_module      module:%s" % module.__name__)
+    remove_ncfiles(verbose)
+    make_simple_netcdf_file(ncfiles)
+ 
+def teardown_module(module):
+    if verbose: print ("teardown_module   module:%s" % module.__name__)
+    remove_ncfiles(verbose)
 
 def test_numvals():
     assert( nc2nc.numVals((4,5,12)) == 240 )
@@ -55,35 +73,8 @@ def test_chunk_shape_nD():
     # silently ignore and use the variable dimensions
     assert_array_equal( nc2nc.chunk_shape_nD((1,5,5,5),4,4096,12), [1,5,5,5])
 
-ncfiles =['simple_xy.nc']
-
-def make_netcdf_files():
-
-    # os.unlink(ncfiles[0])
-
-    # the output array to write will be nx x ny
-    nx = 600; ny = 120
-    # open a new netCDF file for writing.
-    ncfile = Dataset(ncfiles[0],'w',format="NETCDF4_CLASSIC") 
-    # create the output data.
-    data_out = arange(nx*ny)/100. # 1d array
-    data_out.shape = (nx,ny) # reshape to 2d array
-    # create the x and y dimensions.
-    ncfile.createDimension('x',nx)
-    ncfile.createDimension('y',ny)
-    # create the variable (4 byte integer in this case)
-    # first argument is name of variable, second is datatype, third is
-    # a tuple with the names of dimensions.
-    data = ncfile.createVariable('data',dtype('float32').char,('x','y'))
-    data.setncattr("Unhidden","test")
-    # write data to variable.
-    data[:] = data_out
-    # close the file.
-    ncfile.close()
-
 def test_nc2nc():
 
-    make_netcdf_files()
     # Compress the file we just made
     nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.nc',clobber=True)
     # call h5diff?
