@@ -196,7 +196,7 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,buffersize=50
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
     except:
-        state['error'] = "Compression failed"
+        state['error'] = "Compression failed: " + output`
     else:
         state['times'] =  output.split()
         state['comp_size'] = os.path.getsize(outfile)
