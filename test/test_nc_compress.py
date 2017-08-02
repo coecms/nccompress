@@ -51,11 +51,13 @@ def test_is_compressed():
 def test_is_compressed():
     # retdict = nc_compress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
     retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True)
+    print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
     assert retdict['shuffle']
     # retdict = nc_compress.run_nc2nc('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True)
     retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False)
+    print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
     assert retdict['shuffle']
