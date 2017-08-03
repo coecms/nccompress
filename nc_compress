@@ -196,12 +196,12 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,buffersize=50
     if verbose: print (' '.join(cmd))
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-        print("Output : {}".format(output))
-    except:
-        state['error'] = "Compression failed: " + output
-        print("Output : {}".format(output))
+        print("Try : {}".format(output))
+    except Exception as e:
+        state['error'] = "Compression failed: " + str(e)
+        print("Except : {}".format(e))
     else:
-        print("Output : {}".format(output))
+        print("Else : {}".format(output))
         state['times'] =  output.split()
         state['comp_size'] = os.path.getsize(outfile)
         if paranoid and not are_equal(infile,outfile,verbose):
