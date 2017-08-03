@@ -196,6 +196,7 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,buffersize=50
     if verbose: print (' '.join(cmd))
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        print(output)
     except:
         state['error'] = "Compression failed: " + output
     else:
