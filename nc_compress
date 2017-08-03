@@ -192,6 +192,7 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,buffersize=50
     else:
         cmd = nc2nc_cmd(infile,outfile,level,shuffle,verbose,buffersize,timing)
 
+    output = ''
     if verbose: print (' '.join(cmd))
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
