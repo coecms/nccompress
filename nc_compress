@@ -82,8 +82,8 @@ def are_equal(infile,outfile,verbose):
     output = ''
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-    except:
-        if verbose: print output
+    except Exception as e:
+        print("Problem comparing two netCDF files: {}\n Exception: {}".format(" ".join(cmd), e)
         return False
     return True 
 

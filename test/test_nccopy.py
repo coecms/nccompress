@@ -43,11 +43,22 @@ def test_nccopy():
     if which('cdo') is None:
         print("Could not find cdo in path")
         assert(False)
+    else:
+        print(which('cdo'))
 
     cmd = ['nccopy', '-d', '3', '-s', '-m', '50000000', 'simple_xy.nc', 'simple_xy.nccopy.nc']
 
     output = ''
 
+    try:
+        output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        print("Try : {}".format(output))
+    except Exception as e:
+        print("Except : {}".format(e))
+    else:
+        print("Else : {}".format(output))
+
+    cmd = ['cdo', '-h']
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
         print("Try : {}".format(output))
