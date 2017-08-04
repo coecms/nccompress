@@ -19,7 +19,7 @@ from __future__ import print_function
 import pytest
 import imp
 import os
-from utils import make_simple_netcdf_file, remove_ncfiles
+from utils import make_simple_netcdf_file, remove_ncfiles, which
 import subprocess
 
 # Test is run from directory above this one, location of the source file
@@ -39,6 +39,10 @@ def teardown_module(module):
     remove_ncfiles(verbose)
 
 def test_nccopy():
+
+    if which('cdo') is None:
+        print("Could not find cdo in path")
+        assert(False)
 
     cmd = ['nccopy', '-d', '3', '-s', '-m', '50000000', 'simple_xy.nc', 'simple_xy.nccopy.nc']
 
