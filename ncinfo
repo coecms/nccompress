@@ -10,7 +10,7 @@ import operator
 import itertools as it
 from warnings import warn
 
-def ncinfo(files, hidedims, ignoretime, vars=None):
+def ncinfo(files, hidedims, ignoretime, units, vars=None):
 
     if isinstance(files, list):
         try:
@@ -70,7 +70,15 @@ def ncinfo(files, hidedims, ignoretime, vars=None):
             long_name =  var.__getattribute__("long_name")
         except AttributeError:
             long_name =  ''
-        # print fmt.format(varname,varname_maxlen,var.shape,long_name)
+
+        if units:
+            try:
+                unit =  "(" + var.__getattribute__("units") + ")"
+            except AttributeError:
+                unit =  ''
+            long_name = " ".join([long_name,unit])
+
+        # print fmt.format(varname,varname_maxlen,var.shape,long_name)ong
         pr_varnames.append(str(varname))
         pr_dimensions.append(str(var.shape))
         pr_longnames.append(str(long_name))
@@ -117,14 +125,15 @@ if __name__ == '__main__':
     parser.add_argument("-d","--dims", help="Show dimensions", action='store_true')
     parser.add_argument("-a","--aggregate", help="Aggregate multiple netCDF files into one dataset", action='store_true')
     parser.add_argument("-va","--vars", help="Show info for only specify variables", action='append')
+    parser.add_argument("-u","--units", help="Show units", action='store_true')
     parser.add_argument("inputs", help="netCDF files", nargs='+')
     args = parser.parse_args()
 
     verbose = args.verbose
 
     if args.aggregate:
-        ncinfo(args.inputs, not args.dims, not args.time, args.vars)
+        ncinfo(args.inputs, not args.dims, not args.time, args.units, args.vars)
         # ncinfo(args.inputs, not args.dims, not args.time)
     else:
         for ncinput in args.inputs:
-            ncinfo(ncinput, not args.dims, not args.time, args.vars)
+            ncinfo(ncinput, not args.dims, not args.time, args.units, args.vars)
