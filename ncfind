@@ -58,7 +58,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Find netCDF files. Can discriminate by compression")
     # parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
-    parser.add_argument("-r","--recursive", help="Recursively descend directories compressing all netCDF files (default False)", action='store_true')
+    parser.add_argument("-r","--recursive", help="Recursively descend directories to find netCDF files (default False)", action='store_true')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-u","--uncompressed", help="Find only uncompressed netCDF files (default False)", action='store_true')
