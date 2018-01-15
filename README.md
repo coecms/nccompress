@@ -22,12 +22,11 @@ positional arguments:
 
 optional arguments:
   -h, --help          show this help message and exit
-  -r, --recursive     Recursively descend directories compressing all netCDF
-                      files (default False)
+  -r, --recursive     Recursively descend directories to find netCDF files
+                      (default False)
   -u, --uncompressed  Find only uncompressed netCDF files (default False)
   -c, --compressed    Find only compressed netCDF files (default False)
-
-
+ 
 ```
 
 There are other methods for finding files, namely the unix utility find utility. For example, to find all files in the directory "directoryname" which end in ".nc":
