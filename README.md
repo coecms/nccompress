@@ -1,5 +1,7 @@
 # nccompress
 
+The nccompress package has been written to facilitate compressing netcdf files. Although nc_compress can work on single files, it is particularly useful to compress all uncompressed files under whole directory trees. This can allow users to compress files regularly using the same script each time. 
+
 The nccompress package consists of three python programs, ncfind, nc2nc and nc_compress. nc2nc can copy netCDF files with compression and an optimised chunking strategy that has reasonable performance for many datasets. This two main limitations: it is slower than some other programs, and it can only compress netCDF3 or netCDF4 classic format. There is more detail in the following sections.
 
 The convenience utility ncinfo is also included, and though it has no direct relevance to compression, it is a convenient way to get a summary of the contents of a netCDF file.
