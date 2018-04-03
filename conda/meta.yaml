@@ -1,0 +1,37 @@
+package:
+    name: nccompress
+    version: {{ GIT_DESCRIBE_TAG }}
+
+build:
+    number: {{ GIT_DESCRIBE_NUMBER }}
+    string: {{ GIT_BUILD_STR }}
+
+source:
+    git_url: ../
+
+build:
+    script: python setup.py install
+
+requirements:
+    build:
+        - python
+        - pbr
+    run:
+        - python
+        - six
+
+test:
+    source_files:
+        - setup.cfg
+        - conftest.py
+        - test
+    requires:
+        - pytest
+    commands:
+        - py.test
+
+about:
+    home: https://github.com/aidanheerdegen/nccompress
+    license: Apache 2.0
+    license_file: LICENSE-2.0.txt
+    summary: Tool to compress directories of netCDF files
