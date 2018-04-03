@@ -22,6 +22,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import sys
 import os
 from utils import make_simple_netcdf_file, remove_ncfiles, which
+import pdb
 
 verbose = True
 
@@ -54,13 +55,14 @@ def test_is_compressed():
         print("Could not find nccopy in path")
         assert(False)
     # retdict = nc_compress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
-    retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True)
+    pdb.set_trace()
+    retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True,timing=True)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
     assert retdict['shuffle']
     # retdict = nc_compress.run_nc2nc('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True)
-    retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False)
+    retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False,timing=True)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)

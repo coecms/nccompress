@@ -21,6 +21,7 @@ import imp
 import os
 from utils import make_simple_netcdf_file, remove_ncfiles, which
 import subprocess
+import pdb
 
 # Test is run from directory above this one, location of the source file
 nc_compress = imp.load_source('nc_compress', "nc_compress")
@@ -36,9 +37,11 @@ def setup_module(module):
  
 def teardown_module(module):
     if verbose: print ("teardown_module   module:%s" % module.__name__)
-    remove_ncfiles(verbose)
+    # remove_ncfiles(verbose)
 
 def test_nccopy():
+
+    # pdb.set_trace()
 
     if which('cdo') is None:
         print("Could not find cdo in path")
@@ -52,20 +55,13 @@ def test_nccopy():
 
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-        print("Try : {}".format(output))
+        # print("Try : {}".format(output))
     except Exception as e:
         print("Except : {}".format(e))
     else:
-        print("Else : {}".format(output))
+        pass
+        # print("Else : {}".format(output))
 
-    cmd = ['cdo', '-h']
-    try:
-        output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-        print("Try : {}".format(output))
-    except Exception as e:
-        print("Except : {}".format(e))
-    else:
-        print("Else : {}".format(output))
 
     # Use a function from nc_compress which calls cdo diffn. First test it with
     # the same file
