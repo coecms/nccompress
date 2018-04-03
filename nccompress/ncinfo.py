@@ -8,6 +8,7 @@ import sys
 import math
 import operator
 import itertools as it
+import argparse
 from warnings import warn
 
 def ncinfo(files, hidedims, ignoretime, units, vars=None):
@@ -91,33 +92,10 @@ def ncinfo(files, hidedims, ignoretime, units, vars=None):
         print fmt.format(varstr,pr_varnames_maxlen,dimstr,pr_dimensions_maxlen,namestr)
 
 
-if __name__ == '__main__':
-
-    import getopt, os
-    import argparse
-    import copy
-    
-    class DictAction(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string=None):
-            try:
-                k, v = values.split("=", 1)
-            except ValueError:
-                raise argparse.ArgumentError(self, "Format must be key=value")
-
-            # Implementation is from argparse._AppendAction
-            items = copy.copy(argparse._ensure_value(namespace, self.dest, {}))  # Default mutables, use copy!
-            try:
-                items[k] = int(v)
-            except ValueError:
-                raise argparse.ArgumentError(self, "value must be an integer")
-            if items[k] < 0: raise argparse.ArgumentError(self, "value cannot be negative")
-            setattr(namespace, self.dest, items)
-
-    def positive_int(value):
-        ivalue = int(value)
-        if ivalue < 1:
-            raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
-        return ivalue
+def parse_args(arglist):
+    """
+    Parse arguments given as list (arglist)
+    """
 
     parser = argparse.ArgumentParser(description="Output summary information about a netCDF file")
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
@@ -127,8 +105,11 @@ if __name__ == '__main__':
     parser.add_argument("-va","--vars", help="Show info for only specify variables", action='append')
     parser.add_argument("-u","--units", help="Show units", action='store_true')
     parser.add_argument("inputs", help="netCDF files", nargs='+')
-    args = parser.parse_args()
 
+    return parser.parse_args(arglist)
+
+def main(args):
+    
     verbose = args.verbose
 
     if args.aggregate:
@@ -137,3 +118,21 @@ if __name__ == '__main__':
     else:
         for ncinput in args.inputs:
             ncinfo(ncinput, not args.dims, not args.time, args.units, args.vars)
+                
+def main_parse_args(arglist):
+    """
+    Call main with list of arguments. Callable from tests
+    """
+    # Must return so that check command return value is passed back to calling routine
+    # otherwise py.test will fail
+    return main(parse_args(arglist))
+
+def main_argv():
+    """
+    Call main and pass command line arguments. This is required for setup.py entry_points
+    """
+    main_parse_args(sys.argv[1:])
+
+if __name__ == "__main__":
+
+    main_argv()

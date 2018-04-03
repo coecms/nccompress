@@ -19,6 +19,10 @@ import math
 import operator
 import itertools as it
 from warnings import warn
+import argparse
+import copy
+import numbers
+    
 
 dtypes = {
     'f' : 4, # f4, 32-bit floating point
@@ -307,13 +311,11 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
     ncfile_o.close()
     ncfile_d.close()
 
-if __name__ == '__main__':
+def parse_args(arglist):
+    """
+    Parse arguments given as list (arglist)
+    """
 
-    import getopt, os
-    import argparse
-    import copy
-    import numbers
-    
     class DictAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             try:
@@ -350,8 +352,11 @@ if __name__ == '__main__':
     parser.add_argument("-i","--ignoreformat", help="Ignore warnings about netCDF4 formatted file: BE CAREFUL! (default false)", action='store_true')
     parser.add_argument("origin", help="netCDF file to be compressed")
     parser.add_argument("destination", help="netCDF output file")
-    args = parser.parse_args()
 
+    return parser.parse_args(arglist)
+
+def main(args):
+    
     zlib=False
     if args.dlevel > 0: zlib=True
  
@@ -361,3 +366,21 @@ if __name__ == '__main__':
     nc2nc(args.origin, args.destination, zlib=zlib, complevel=args.dlevel, shuffle=not args.noshuffle,
         fletcher32=args.fletcher32, clobber=args.overwrite, lsd_dict=args.quantize,
         verbose=verbose, vars=args.vars, classic=args.classic, buffersize=args.buffersize, ignoreformat=args.ignoreformat)
+                
+def main_parse_args(arglist):
+    """
+    Call main with list of arguments. Callable from tests
+    """
+    # Must return so that check command return value is passed back to calling routine
+    # otherwise py.test will fail
+    return main(parse_args(arglist))
+
+def main_argv():
+    """
+    Call main and pass command line arguments. This is required for setup.py entry_points
+    """
+    main_parse_args(sys.argv[1:])
+
+if __name__ == "__main__":
+
+    main_argv()

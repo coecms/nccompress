@@ -47,7 +47,10 @@ def is_compressed(handle):
 
     return compressed
 
-if __name__ == "__main__":
+def parse_args(arglist):
+    """
+    Parse arguments given as list (arglist)
+    """
 
     def maxcompression_type(x):
         x = int(x)
@@ -66,7 +69,9 @@ if __name__ == "__main__":
 
     parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories). Can accept piped arguments.", nargs='*', default=sys.stdin)
 
-    args = parser.parse_args()
+    return parser.parse_args(arglist)
+    
+def main(args):
     
     # verbose=args.verbose
 
@@ -132,3 +137,22 @@ if __name__ == "__main__":
                     else:
                         nuncompressed += 1
                         if finduncompressed: sys.stdout.write(filepath+"\n")
+
+                
+def main_parse_args(arglist):
+    """
+    Call main with list of arguments. Callable from tests
+    """
+    # Must return so that check command return value is passed back to calling routine
+    # otherwise py.test will fail
+    return main(parse_args(arglist))
+
+def main_argv():
+    """
+    Call main and pass command line arguments. This is required for setup.py entry_points
+    """
+    main_parse_args(sys.argv[1:])
+
+if __name__ == "__main__":
+
+    main_argv()

@@ -327,7 +327,11 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
         except OSError:
             print("Failed to remove temporary directory {}".format(outdir))
 
-if __name__ == "__main__":
+
+def parse_args(arglist):
+    """
+    Parse arguments given as list (arglist)
+    """
 
     def maxcompression_type(x):
         x = int(x)
@@ -335,7 +339,6 @@ if __name__ == "__main__":
             raise argparse.ArgumentTypeError("Minimum maxcompression is 0")
         return x
 
-    
     parser = argparse.ArgumentParser(description="Run nc2nc (or nccopy) on a number of netCDF files")
     parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
     # parser.add_argument("-l","--limited", help="Change unlimited dimension to fixed size (default is to not squash unlimited)", action='store_true')
@@ -354,7 +357,10 @@ if __name__ == "__main__":
     parser.add_argument("--nccopy", help="Use nccopy instead of nc2nc (default False)", action='store_true')
     parser.add_argument("--timing", help="Collect timing statistics when compressing each file (default False)", action='store_true')
     parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='+')
-    args = parser.parse_args()
+
+    return parser.parse_args(arglist)
+
+def main(args):
     
     verbose=args.verbose
 
@@ -409,3 +415,20 @@ if __name__ == "__main__":
         compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid,numproc,args.timing)
 
                 
+def main_parse_args(arglist):
+    """
+    Call main with list of arguments. Callable from tests
+    """
+    # Must return so that check command return value is passed back to calling routine
+    # otherwise py.test will fail
+    return main(parse_args(arglist))
+
+def main_argv():
+    """
+    Call main and pass command line arguments. This is required for setup.py entry_points
+    """
+    main_parse_args(sys.argv[1:])
+
+if __name__ == "__main__":
+
+    main_argv()
