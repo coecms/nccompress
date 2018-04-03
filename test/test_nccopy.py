@@ -22,9 +22,7 @@ import os
 from utils import make_simple_netcdf_file, remove_ncfiles, which
 import subprocess
 import pdb
-
-# Test is run from directory above this one, location of the source file
-nc_compress = imp.load_source('nc_compress', "nc_compress")
+from nccompress import nccompress
 
 verbose = True
 
@@ -63,9 +61,9 @@ def test_nccopy():
         # print("Else : {}".format(output))
 
 
-    # Use a function from nc_compress which calls cdo diffn. First test it with
+    # Use a function from nccompress which calls cdo diffn. First test it with
     # the same file
-    assert nc_compress.are_equal('simple_xy.nc','simple_xy.nc',verbose=True)
+    assert nccompress.are_equal('simple_xy.nc','simple_xy.nc',verbose=True)
 
-    assert nc_compress.are_equal('simple_xy.nc','simple_xy.nccopy.nc',verbose=True)
+    assert nccompress.are_equal('simple_xy.nc','simple_xy.nccopy.nc',verbose=True)
 

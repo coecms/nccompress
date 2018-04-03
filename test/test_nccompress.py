@@ -24,13 +24,12 @@ import os
 from utils import make_simple_netcdf_file, remove_ncfiles, which
 import pdb
 
+from nccompress import nccompress
+
 verbose = True
 
 # Make sure we find nc2nc in the directory above
 os.environ['PATH'] = '..' + os.pathsep + os.environ['PATH']
-
-# Test is run from directory above this one, location of the source file
-nc_compress = imp.load_source('nc_compress', "nc_compress")
 
 ncfiles =['simple_xy.nc']
 
@@ -44,32 +43,32 @@ def teardown_module(module):
     remove_ncfiles(verbose)
 
 def test_is_compressed():
-    assert not nc_compress.is_compressed('simple_xy.nc')
-    assert nc_compress.is_compressed('simple_xy.nc2nc.nc')
+    assert not nccompress.is_compressed('simple_xy.nc')
+    assert nccompress.is_compressed('simple_xy.nc2nc.nc')
     # Test classic model
-    assert not nc_compress.is_compressed('simple_xy.classic.nc')
+    assert not nccompress.is_compressed('simple_xy.classic.nc')
 
 def test_is_compressed():
 
     if which('nccopy') is None:
         print("Could not find nccopy in path")
         assert(False)
-    # retdict = nc_compress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
+    # retdict = nccompress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
     pdb.set_trace()
-    retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True,timing=True)
+    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True,timing=True)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
     assert retdict['shuffle']
-    # retdict = nc_compress.run_nc2nc('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True)
-    retdict = nc_compress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False,timing=True)
+    # retdict = nccompress.run_nc2nc('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True)
+    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False,timing=True)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
     assert retdict['shuffle']
 
 def test_are_equal():
-    assert nc_compress.are_equal('simple_xy.nc','simple_xy.run_nc2nc.nc',verbose=True)
-    assert nc_compress.are_equal('simple_xy.run_nc2nc.nc','simple_xy.run_nccopy.nc',verbose=True)
-    assert not nc_compress.are_equal('simple_xy.nc','simple_xy.2nc_quantised.nc',verbose=True)
+    assert nccompress.are_equal('simple_xy.nc','simple_xy.run_nc2nc.nc',verbose=True)
+    assert nccompress.are_equal('simple_xy.run_nc2nc.nc','simple_xy.run_nccopy.nc',verbose=True)
+    assert not nccompress.are_equal('simple_xy.nc','simple_xy.2nc_quantised.nc',verbose=True)
     # os.unlink('simple_xy.run_nc2nc.nc')

@@ -23,11 +23,10 @@ from numpy import array, arange, dtype
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import os
 from utils import make_simple_netcdf_file, remove_ncfiles
+from nccompress import nc2nc
 
 verbose = True
 
-# Test is run from directory above this one, location of the source file
-nc2nc = imp.load_source('nc2nc', "nc2nc")
 
 ncfiles =['simple_xy.nc']
 
