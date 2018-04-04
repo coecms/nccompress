@@ -147,7 +147,7 @@ def check_and_overwrite(state,verbose,maxcompress):
         if verbose: print("Overwriting {0}".format(state['infile']))
         try:
             move(state['outfile'],state['infile'])
-        except Exception, e:
+        except Exception as e:
             state['error'] = "Failed to overwrite original file"
         else:
             state['error'] = False
@@ -248,7 +248,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
             try:
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
-            except Exception, e:
+            except Exception as e:
                 print e
 
     for file in files:
