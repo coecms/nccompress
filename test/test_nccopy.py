@@ -39,26 +39,29 @@ def teardown_module(module):
 
 def test_nccopy():
 
-    # pdb.set_trace()
-
     if which('cdo') is None:
         print("Could not find cdo in path")
         assert(False)
     else:
         print(which('cdo'))
 
-    cmd = ['nccopy', '-d', '3', '-s', '-m', '50000000', 'simple_xy.nc', 'simple_xy.nccopy.nc']
+    if which('nccopy') is None:
+        print("Could not find nccopy in path")
+        assert(False)
+    else:
+        print(which('nccopy'))
+
+    cmd = ['nccopy', '-c','-d', '3', '-s', '-m', '50000000', 'simple_xy.nc', 'simple_xy.nccopy.nc']
 
     output = ''
 
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-        # print("Try : {}".format(output))
     except Exception as e:
-        print("Except : {}".format(e))
+        # pdb.set_trace()
+        print("exception : {} {}".format(e,e.output))
     else:
         pass
-        # print("Else : {}".format(output))
 
 
     # Use a function from nccompress which calls cdo diffn. First test it with
