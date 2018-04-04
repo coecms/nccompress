@@ -19,6 +19,11 @@ requirements:
     run:
         - python
         - six
+	- numpy
+	- cdo
+        - netcdf4
+        - libnetcdf
+
 
 test:
     source_files:
@@ -28,7 +33,7 @@ test:
     requires:
         - pytest
     commands:
-        - py.test
+        - py.test -s
 
 about:
     home: https://github.com/aidanheerdegen/nccompress
