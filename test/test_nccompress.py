@@ -54,7 +54,7 @@ def test_is_compressed():
         print("Could not find nccopy in path")
         assert(False)
     # retdict = nccompress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
-    pdb.set_trace()
+    # pdb.set_trace()
     retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True,timing=True)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
