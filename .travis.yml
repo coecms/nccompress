@@ -16,7 +16,8 @@ install:
  
     - echo $TRAVIS_PYTHON_VERSION
     - conda config --set always_yes yes --set changeps1 no
-    - conda create -n travis python=$TRAVIS_PYTHON_VERSION -f conda/dev-environment.yml
+    - conda create -n travis python=$TRAVIS_PYTHON_VERSION
+    - conda env update -n travis -f conda/dev-environment.yml
     - if [ -f conda/dev-environment-py${TRAVIS_PYTHON_VERSION}.yml ]; then conda env update -n travis -f conda/dev-environment-py${TRAVIS_PYTHON_VERSION}.yml; fi
     - source activate travis
     - pip install --upgrade pytest numpy netCDF4
