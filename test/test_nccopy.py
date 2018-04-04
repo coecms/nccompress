@@ -35,7 +35,7 @@ def setup_module(module):
  
 def teardown_module(module):
     if verbose: print ("teardown_module   module:%s" % module.__name__)
-    # remove_ncfiles(verbose)
+    remove_ncfiles(verbose)
 
 def test_nccopy():
 
