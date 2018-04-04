@@ -20,8 +20,8 @@ def ncinfo(files, hidedims, ignoretime, units, vars=None):
             warn("Could not aggregate datasets, python library returned: "+str(e))
             return
     else:
-        print
-        print files
+        print()
+        print(files)
         ncobj = Dataset(files,'r')
 
     varnames = ncobj.variables.keys()
@@ -46,9 +46,9 @@ def ncinfo(files, hidedims, ignoretime, units, vars=None):
             except AttributeError:
                 unit = 'None'
             if nsteps > 1:
-                print "Time steps: ",nsteps," x ",var[1]-var[0],unit
+                print("Time steps: ",nsteps," x ",var[1]-var[0],unit)
             elif nsteps == 1:
-                print "Time : ",var[0],unit
+                print("Time : ",var[0],unit)
             continue
 
         if ignoretime and "time" in varname.lower():
@@ -79,17 +79,15 @@ def ncinfo(files, hidedims, ignoretime, units, vars=None):
                 unit =  ''
             long_name = " ".join([long_name,unit])
 
-        # print fmt.format(varname,varname_maxlen,var.shape,long_name)ong
         pr_varnames.append(str(varname))
         pr_dimensions.append(str(var.shape))
         pr_longnames.append(str(long_name))
-        # print varname, '::', var.shape, '::', var.getncattr("long_name")
 
     fmt = '{0:{1}} :: {2:{3}} :: {4}'
     pr_varnames_maxlen = len(max(pr_varnames, key=len))
     pr_dimensions_maxlen = len(max(pr_dimensions, key=len))
     for varstr, dimstr, namestr in zip(pr_varnames, pr_dimensions, pr_longnames):
-        print fmt.format(varstr,pr_varnames_maxlen,dimstr,pr_dimensions_maxlen,namestr)
+        print(fmt.format(varstr,pr_varnames_maxlen,dimstr,pr_dimensions_maxlen,namestr))
 
 
 def parse_args(arglist):

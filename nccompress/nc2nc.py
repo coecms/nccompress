@@ -68,7 +68,6 @@ def cascadeRounding(array):
         total_float += array[idx]
         integer_array.append(min(round(total_float),limit)-total_int)
         total_int += integer_array[-1]
-        # print idx, array[idx], total_float, integer_array[-1], total_int
 
     rounded_array = np.zeros(len(array))
 
@@ -139,7 +138,6 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=1):
                 # mask it out of the array of possible chunkShapes
                 chunkShape[i] = ma.masked
 
-        # print chunkShape,chunkShapeFinal
         # Have we fixed any dimensions and filled them in chunkShapeFinal?
         if chunkShapeFinal.count() > 0:
             chunkCount = numVals(chunkShapeFinal[~chunkShapeFinal.mask])

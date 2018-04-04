@@ -249,7 +249,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
             except Exception as e:
-                print e
+                print(e)
 
     for file in files:
 
@@ -260,7 +260,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
         if is_netCDF(infile):
             if verbose: sys.stdout.write( "Compressing %s, deflate level = %s, shuffle is on: %s\n" % (infile,level,shuffle) )
         else:
-            if verbose: print 'Not a netCDF file: ' + infile
+            if verbose: print('Not a netCDF file: ' + infile)
             continue
 
         # Check to see if the input file is already compressed
@@ -268,7 +268,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
             if force:
                 if verbose: sys.stdout.write("Already compressed %s but forcing overwrite\n" % infile)
             else:
-                if verbose: print 'Already compressed skipping ...'
+                if verbose: print('Already compressed skipping ...')
                 continue
 
         # Try compressing the data

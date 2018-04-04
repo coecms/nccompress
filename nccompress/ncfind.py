@@ -90,7 +90,6 @@ def main(args):
     for ncinput in args.inputs:
         # If we pipe files to stdin they may have a trailing newline, so we
         # need to strip it out
-        # print '|',ncinput,'|'
         ncinput = ncinput.rstrip('\r\n')
         if not os.path.exists(ncinput):
             sys.stderr.write("Input does not exist: {} .. skipping\n".format(ncinput))
@@ -126,7 +125,6 @@ def main(args):
         # temporary sub directory.
         for directory in filedict:
             if len(filedict[directory]) == 0: continue
-            # print directory
             for file in filedict[directory]:
                 filepath = os.path.join(directory,file)
                 isnetCDF, iscompressed =  is_netCDF_compressed(filepath)
