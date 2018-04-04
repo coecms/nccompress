@@ -22,6 +22,7 @@ from warnings import warn
 import argparse
 import copy
 import numbers
+from six.moves import reduce
     
 
 dtypes = {
