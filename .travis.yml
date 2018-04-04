@@ -21,6 +21,7 @@ install:
     - source activate travis
     - pip install --upgrade pytest numpy netCDF4
 script:
+    - python --version
     - py.test -s test/test_nc2nc.py test/test_nccopy.py
 after_success:
     - coverage run --source=n2nc,nc_compress,test/test_nc2nc.py,test/test_nc_compress.py -m py.test
