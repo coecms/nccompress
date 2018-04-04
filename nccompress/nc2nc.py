@@ -236,7 +236,7 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         ncvar = ncfile_o.variables[varname]
         if verbose: sys.stdout.write('copying variable %s\n' % varname)
         # quantize data?
-        if lsd_dict is not None and lsd_dict.has_key(varname):
+        if lsd_dict is not None and varname in lsd_dict:
             lsd = int(lsd_dict[varname])
             if verbose: sys.stdout.write('truncating to least_significant_digit = %d\n'%lsd)
         else:
