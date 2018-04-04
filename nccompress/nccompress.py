@@ -83,7 +83,7 @@ def are_equal(infile,outfile,verbose):
     try:
         output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
     except Exception as e:
-        print("Problem comparing two netCDF files: {}\n Exception: {}".format(" ".join(cmd), e))
+        print("Problem comparing two netCDF files: {}\n Exception: {}".format(" ".join(cmd), e.output))
         return False
     return True
 
