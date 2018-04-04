@@ -55,7 +55,7 @@ def test_is_compressed():
         assert(False)
     # retdict = nccompress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
     # pdb.set_trace()
-    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True,timing=True)
+    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True,timing=False)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
@@ -63,7 +63,7 @@ def test_is_compressed():
 
     # This requires nc2nc to be in the path. If nccompress/nc2nc.py has changed this will not be reflect
     # any change until installation. This is a test for nccompres to correctly call nc2nc
-    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False,timing=True)
+    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False,timing=False)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
