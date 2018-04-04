@@ -7,4 +7,7 @@ channels:
 dependencies:
     - python
     - pbr
+    - numpy
     - cdo
+    - netcdf4
+    - libnetcdf
