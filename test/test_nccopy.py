@@ -51,7 +51,7 @@ def test_nccopy():
     else:
         print(which('nccopy'))
 
-    cmd = ['nccopy', '-d', '3', '-s', '-m', '50000000', 'simple_xy.nc', 'simple_xy.nccopy.nc']
+    cmd = ['nccopy', '-d', '3', '-s', 'simple_xy.nc', 'simple_xy.nccopy.nc']
 
     output = ''
 
