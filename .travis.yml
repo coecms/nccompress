@@ -13,7 +13,8 @@ install:
       fi
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
-
+ 
+    - echo $TRAVIS_PYTHON_VERSION
     - conda config --set always_yes yes --set changeps1 no
     - conda create -n travis python=$TRAVIS_PYTHON_VERSION
     - conda env update -n travis -f conda/dev-environment.yml
