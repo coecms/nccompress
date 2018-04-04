@@ -64,15 +64,15 @@ and discriminate between compressed and uncompressed:
      
 
 There are other methods for finding files, namely the unix utility find
-utility. For example, to find all files in the directory “directoryname”
-which end in “.nc”:
+utility. For example, to find all files in the directory "directoryname"
+which end in ".nc":
 
 ::
 
     find directoryname -iname "*.nc"
 
 However, if your netCDF files do not use the convention of ending in
-“.nc” or cannot be systematically found based on filename, you can use
+".nc" or cannot be systematically found based on filename, you can use
 the ncfind to recursively descend into a directory structure looking for
 netCDF files:
 
@@ -104,7 +104,7 @@ du is the disk usage utility. The output looks something like this:
     1.1G    total
 
 It is even possible to combine the system find utility with ncfind,
-using a unix pipe (|). This command will find all files ending in “.nc”,
+using a unix pipe (|). This command will find all files ending in ".nc",
 pipe the results to ncfind, and only those that are uncompressed will be
 printed to the screen:
 
@@ -213,21 +213,21 @@ make sure they look ok, and if so, re-run the command with the -o option
     nc_compress -r -o data/output001
 
 and it will find the already compressed files, copy them over the
-originals and delete the temporary directory tmp.nc_compress. It won’t
-try to compress the files again. It also won’t compress already
+originals and delete the temporary directory tmp.nc_compress. It won't
+try to compress the files again. It also won't compress already
 compressed files, so, for example, if you were happy that the
 compression was working well you could compress the entire data
 directory, and the already compressed files in output001 will not be
 re-compressed.
 
 So, by default, nc_compress **does not overwrite the original files**.
-If you invoke it without the ‘-o’ option it will create compressed
+If you invoke it without the `-o` option it will create compressed
 copies in the tmp.nc_compress subdirectory and leave them there, which
 will consume more disk space! This is a feature, not a bug, but you need
 to be aware that this is how it functions.
 
 With large variables, which usually means large files (> 1GB) it is a
-good idea to specify a larger buffer size with the ‘-b’ option, as it
+good idea to specify a larger buffer size with the `-b` option, as it
 will run faster. On raijin this may mean you need to run interactively
 with a higher memory (~10GB) or submit it as a copyq job. A typical
 buffer size might be 1000 -> 5000 (1->5 GB).
@@ -243,14 +243,14 @@ It is also possible to use wildcards type operations, e.g.
     nc_compress -r -o run[1-5]/output*/ocean*.nc random.nc ice*.nc
 
 The nc_compress program just sorts out finding files/directories etc, it
-calls nc2nc to do the compression. Using the option ‘–nccopy’ forces
+calls nc2nc to do the compression. Using the option `--nccopy` forces
 nc_compress to use the nccopy program in place of nc2nc, though the
 netcdf package must already be loaded for this to work.
 
 You can tell nc_compress to work on multple files simultaneously with
-the ‘-pa’ option. By default this will use all the physical processors
+the `-pa` option. By default this will use all the physical processors
 on the machine, or you can specify how many simultaneous processes you
-want to with ‘-np’, e.g.
+want to with `-np`, e.g.
 
 ::
 
@@ -277,7 +277,7 @@ Be aware that nc2nc takes at least twice as long to compress an
 equivalent file as nccopy. In some cases with large files containing
 many variables it can be up to five times slower.
 
-You can use nc2nc “stand alone”. It has a couple of extra features that
+You can use nc2nc "stand alone". It has a couple of extra features that
 can only be accessed by calling it directly:
 
 ::
@@ -319,7 +319,7 @@ can only be accessed by calling it directly:
 With the vars option (-va) it is possible to select out only a subset of
 variables to be copied to the destination file. By default the output
 file is netCDf4 classic, but this can be changed to netCDF4 using the
-‘-c’ option. It is also possible to specify a minimum dimension size for
+`-c` option. It is also possible to specify a minimum dimension size for
 the chunks (-m). This may be desirable for a dataset that has one
 particularly long dimension,. The chunk dimensions would mirror this and
 be very large in this direction . If fast access is required from slices
