@@ -19,11 +19,10 @@ requirements:
     run:
         - python
         - six
-	- numpy
-	- cdo
+        - numpy
+        - cdo
         - netcdf4
         - libnetcdf
-
 
 test:
     source_files:
