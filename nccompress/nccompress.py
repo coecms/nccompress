@@ -319,7 +319,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
         print("    Average compression ratio: {0:.2f}".format(float(total_size_old)/total_size_new))
     if len(skippedlist) > 0:
         print("    Following files not properly compressed or suspiciously high compression ratio:")
-        print (", ").join(skippedlist)
+        print (", ".join(skippedlist))
 
     if overwrite:
         try:
