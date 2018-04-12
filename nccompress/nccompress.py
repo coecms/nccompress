@@ -33,6 +33,12 @@ import numpy as np
 import numpy.ma as ma
 import multiprocessing as mp
 
+if (sys.version_info > (3, 0)):
+     # Python 3 code in this block
+     netcdf4exception = OSError
+else:
+     # Python 2 code in this block
+     netcdf4exception = IOError
 
 # A couple of hard-wired executable paths that might need changing
 
@@ -51,7 +57,7 @@ def is_netCDF(ncfile):
         tmp = nc.Dataset(ncfile)
         tmp.close()
         return True
-    except RuntimeError:
+    except netcdf4exception:
         return False
 
 def is_compressed(ncfile):

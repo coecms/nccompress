@@ -37,6 +37,7 @@ def setup_module(module):
     if verbose: print ("setup_module      module:%s" % module.__name__)
     remove_ncfiles(verbose)
     make_simple_netcdf_file(ncfiles)
+    open('tmp.txt', 'a').close()
  
 def teardown_module(module):
     if verbose: print ("teardown_module   module:%s" % module.__name__)
@@ -85,3 +86,7 @@ def test_compress_files():
     nccompress.main_parse_args(['-v','-p','simple_xy.nc'])
 
     assert nccompress.are_equal('simple_xy.nc','tmp.nc_compress/simple_xy.nc',verbose=True)
+
+def test_compress_nonnetcdf():
+
+    assert not nccompress.main_parse_args(['-v','-p','tmp.txt'])
