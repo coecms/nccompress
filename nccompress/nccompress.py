@@ -315,8 +315,8 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
     if total_files > 0:
         print("Directory: {0}".format(path))
         print("    Number files compressed: {0}".format(total_files))
-        print("    Total space saved: {0:.2f} {1}").format(total_space_saved,units[power])
-        print("    Average compression ratio: {0:.2f}").format(float(total_size_old)/total_size_new)
+        print("    Total space saved: {0:.2f} {1}".format(total_space_saved,units[power]))
+        print("    Average compression ratio: {0:.2f}".format(float(total_size_old)/total_size_new))
     if len(skippedlist) > 0:
         print("    Following files not properly compressed or suspiciously high compression ratio:")
         print (", ").join(skippedlist)

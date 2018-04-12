@@ -42,35 +42,46 @@ def teardown_module(module):
     if verbose: print ("teardown_module   module:%s" % module.__name__)
     remove_ncfiles(verbose)
 
-def test_is_compressed():
-    assert not nccompress.is_compressed('simple_xy.nc')
-    assert nccompress.is_compressed('simple_xy.nc2nc.nc')
-    # Test classic model
-    assert not nccompress.is_compressed('simple_xy.classic.nc')
+def test_are_equal():
+    assert nccompress.are_equal('simple_xy.nc','simple_xy.nc',verbose=True)
 
-def test_is_compressed():
+def test_run_compress():
 
     if which('nccopy') is None:
         print("Could not find nccopy in path")
         assert(False)
     # retdict = nccompress.run_nccopy('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True)
     # pdb.set_trace()
-    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=False,shuffle=True,nccopy=True,timing=False)
+    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nccopy.nc',level=3,verbose=True,shuffle=True,nccopy=True,timing=False)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
     assert retdict['shuffle']
+    assert nccompress.are_equal('simple_xy.nc','simple_xy.run_nccopy.nc',verbose=True)
 
     # This requires nc2nc to be in the path. If nccompress/nc2nc.py has changed this will not be reflect
     # any change until installation. This is a test for nccompres to correctly call nc2nc
-    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=False,shuffle=True,nccopy=False,timing=False)
+    retdict = nccompress.run_compress('simple_xy.nc','simple_xy.run_nc2nc.nc',level=3,verbose=True,shuffle=True,nccopy=False,timing=False)
     print(retdict)
     assert (retdict['orig_size']/retdict['comp_size'] >= 5.)
     assert (retdict['dlevel'] == 3)
     assert retdict['shuffle']
 
-def test_are_equal():
     assert nccompress.are_equal('simple_xy.nc','simple_xy.run_nc2nc.nc',verbose=True)
+
     assert nccompress.are_equal('simple_xy.run_nc2nc.nc','simple_xy.run_nccopy.nc',verbose=True)
-    assert not nccompress.are_equal('simple_xy.nc','simple_xy.2nc_quantised.nc',verbose=True)
-    # os.unlink('simple_xy.run_nc2nc.nc')
+
+def test_is_compressed():
+    assert not nccompress.is_compressed('simple_xy.nc')
+    assert nccompress.is_compressed('simple_xy.run_nc2nc.nc')
+    # Test classic model
+    # assert not nccompress.is_compressed('simple_xy.classic.nc')
+
+def test_compress_files():
+
+    if which('nccopy') is None:
+        print("Could not find nccopy in path")
+        assert(False)
+    nccompress.main_parse_args(['-v','-p','simple_xy.nc'])
+
+    assert nccompress.are_equal('simple_xy.nc','tmp.nc_compress/simple_xy.nc',verbose=True)
