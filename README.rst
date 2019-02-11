@@ -21,15 +21,15 @@ Tool to compress directories of netCDF files
 ==========
 
 The nccompress package has been written to facilitate compressing netcdf
-files. Although nc_compress can work on single files, it is particularly
+files. Although nccompress can work on single files, it is particularly
 useful to compress all uncompressed files under whole directory trees.
 This can allow users to compress files regularly using the same script
 each time.
 
 The nccompress package consists of three python programs, ncfind, nc2nc
-and nc_compress. nc2nc can copy netCDF files with compression and an
+and nccompress. nc2nc can copy netCDF files with compression and an
 optimised chunking strategy that has reasonable performance for many
-datasets. This two main limitations: it is slower than some other
+datasets. His two main limitations: it is slower than some other
 programs, and it can only compress netCDF3 or netCDF4 classic format.
 There is more detail in the following sections.
 
@@ -117,13 +117,13 @@ Batch Compressing files
 ----------------------
 
 Having identified where the netCDF files you wish to compress are
-located, there is a convenience program, nc_compress, which can be used
+located, there is a convenience program, nccompress, which can be used
 to easily step through and compress each file in turn:
 
 ::
 
-    $ ./nc_compress -h
-    usage: nc_compress [-h] [-d {1-9}] [-n] [-b BUFFERSIZE] [-t TMPDIR] [-v] [-r]
+    $ ./nccompress -h
+    usage: nccompress [-h] [-d {1-9}] [-n] [-b BUFFERSIZE] [-t TMPDIR] [-v] [-r]
                        [-o] [-m MAXCOMPRESS] [-p] [-f] [-c] [-pa] [-np NUMPROC]
                        [--nccopy]
                        inputs [inputs ...]
@@ -168,13 +168,13 @@ The simplest way to invoke the program would be with a single file:
 
 ::
 
-    nc_compress ice_daily_0001.nc
+    nccompress ice_daily_0001.nc
 
 or using a wildcard expression:
 
 ::
 
-    nc_compress ice*.nc
+    nccompress ice*.nc
 
 You can also specify one or more directory names in combination with the
 recursive flag (-r) and the program will recursively descend into those
@@ -195,7 +195,7 @@ directories:
 
 ::
 
-    nc_compress -p -r data/output001
+    nccompress -p -r data/output001
 
 Once completed there will be a new subdirectory called tmp.nc_compress
 inside the directory output001. It will contain compressed copies of all
@@ -210,7 +210,7 @@ make sure they look ok, and if so, re-run the command with the -o option
 
 ::
 
-    nc_compress -r -o data/output001
+    nccompress -r -o data/output001
 
 and it will find the already compressed files, copy them over the
 originals and delete the temporary directory tmp.nc_compress. It won't
@@ -220,7 +220,7 @@ compression was working well you could compress the entire data
 directory, and the already compressed files in output001 will not be
 re-compressed.
 
-So, by default, nc_compress **does not overwrite the original files**.
+So, by default, nccompress **does not overwrite the original files**.
 If you invoke it without the `-o` option it will create compressed
 copies in the tmp.nc_compress subdirectory and leave them there, which
 will consume more disk space! This is a feature, not a bug, but you need
@@ -236,25 +236,25 @@ It is also possible to use wildcards type operations, e.g.
 
 ::
 
-    nc_compress -r -o output*
+    nccompress -r -o output*
 
-    nc_compress -r -o output00[1-5]
+    nccompress -r -o output00[1-5]
 
-    nc_compress -r -o run[1-5]/output*/ocean*.nc random.nc ice*.nc
+    nccompress -r -o run[1-5]/output*/ocean*.nc random.nc ice*.nc
 
-The nc_compress program just sorts out finding files/directories etc, it
+The nccompress program just sorts out finding files/directories etc, it
 calls nc2nc to do the compression. Using the option `--nccopy` forces
-nc_compress to use the nccopy program in place of nc2nc, though the
+nccompress to use the nccopy program in place of nc2nc, though the
 netcdf package must already be loaded for this to work.
 
-You can tell nc_compress to work on multple files simultaneously with
+You can tell nccompress to work on multple files simultaneously with
 the `-pa` option. By default this will use all the physical processors
 on the machine, or you can specify how many simultaneous processes you
 want to with `-np`, e.g.
 
 ::
 
-    nc_compress -r -o -np 16 run[1-5]/output*/ocean*.nc random.nc ice*.nc
+    nccompress -r -o -np 16 run[1-5]/output*/ocean*.nc random.nc ice*.nc
 
 will compress 16 netCDF files at a time (the -np option implies parallel
 option). As each directory is processed before beginning on a new
