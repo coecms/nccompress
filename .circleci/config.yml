@@ -3,7 +3,7 @@ jobs:
     py36:
         working_directory: /circleci
         docker:
-            - image: scottwales/conda-build
+            - image: circleci/python
               environment:
                 PYTHON_VER: 3.6
 
