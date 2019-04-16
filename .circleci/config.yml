@@ -1,30 +1,9 @@
 version: 2
 jobs:
-    py27:
-        working_directory: /circleci
-        docker:
-            - image: scottwales/conda-build
-              environment:
-                PYTHON_VER: 2.7
-
-        steps:
-            - checkout
-
-            - run: |
-                conda build conda --python=${PYTHON_VER}
-
-            - run: |
-                mkdir /artefacts
-                cp $(conda build conda --python=${PYTHON_VER} --output) /artefacts
-
-            - persist_to_workspace:
-                root: /artefacts
-                paths: '*'
-
     py36:
-        working_directory: /circleci
+        working_directory: ~/circleci
         docker:
-            - image: scottwales/conda-build
+            - image: circleci/python
               environment:
                 PYTHON_VER: 3.6
 
@@ -32,14 +11,22 @@ jobs:
             - checkout
 
             - run: |
-                conda build conda --python=${PYTHON_VER}
+                wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O conda.sh
+                bash conda.sh -b -p ~/conda
+                ~/conda/bin/conda config --system --add channels conda-forge
+                ~/conda/bin/conda config --system --add channels coecms
+                ~/conda/bin/conda update conda
+                ~/conda/bin/conda install --yes conda-build conda-verify
 
             - run: |
-                mkdir /artefacts
-                cp $(conda build conda --python=${PYTHON_VER} --output) /artefacts
+                ~/conda/bin/conda build -c coecms conda --python=${PYTHON_VER}
+
+            - run: |
+                mkdir ~/artefacts
+                cp $(~/conda/bin/conda build conda --python=${PYTHON_VER} --output) ~/artefacts
 
             - persist_to_workspace:
-                root: /artefacts
+                root: ~/artefacts
                 paths: '*'
 
     publish:
@@ -57,11 +44,6 @@ workflows:
     version: 2
     build_and_publsh:
         jobs:
-            - py27:
-                filters:
-                    tags:
-                        only: /.*/
-
             - py36:
                 filters:
                     tags:
@@ -69,7 +51,6 @@ workflows:
 
             - publish:
                 requires:
-                    - py27
                     - py36
                 filters:
                     tags:

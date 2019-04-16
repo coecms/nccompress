@@ -17,7 +17,6 @@ import os
 import sys
 import math
 import operator
-import itertools as it
 from warnings import warn
 import argparse
 import copy
@@ -290,7 +289,7 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
             if verbose: sys.stdout.write('Buffer chunk : %s\n' % str(bufferChunk))
 
             # bufferSteps is the number of copies of bufferChunk that fit along each axis
-            bufferSteps = (dimlim-1)/bufferChunk + 1
+            bufferSteps = (dimlim-1)//bufferChunk + 1
     
             # Make an iterator out of all possible combinations of the bufferOffsets, which
             # are just steps along each dimension
@@ -298,7 +297,7 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
                 index *= bufferChunk
                 slices = []
                 # Make up slices of size bufferChunk
-                for start, step, end in it.izip(index, bufferChunk, dimlim):
+                for start, step, end in zip(index, bufferChunk, dimlim):
                     # min checks we don't go beyond the limits of the variable
                     slices.append(slice(start,min(start+step,end),None))
                 # Copy the data
