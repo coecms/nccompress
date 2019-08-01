@@ -10,8 +10,6 @@ Tool to compress directories of netCDF files
   :target: https://circleci.com/gh/coecms/nccompress
 .. image:: http://codecov.io/github/coecms/nccompress/coverage.svg?branch=master
   :target: http://codecov.io/github/coecms/nccompress?branch=master
-.. image:: https://landscape.io/github/coecms/nccompress/master/landscape.svg?style=flat
-  :target: https://landscape.io/github/coecms/nccompress/master
 
 .. content-marker-for-sphinx
 
