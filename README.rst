@@ -8,9 +8,6 @@ Tool to compress directories of netCDF files
   :target: https://travis-ci.org/coecms/nccompress
 .. image:: https://circleci.com/gh/coecms/nccompress.svg?style=shield
   :target: https://circleci.com/gh/coecms/nccompress
-.. image:: http://codecov.io/github/coecms/nccompress/coverage.svg?branch=master
-  :target: http://codecov.io/github/coecms/nccompress?branch=master
-
 .. content-marker-for-sphinx
 
    nccompress
