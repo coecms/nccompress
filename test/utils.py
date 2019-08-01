@@ -50,7 +50,7 @@ def make_simple_netcdf_file(ncfiles):
     # create the variable (4 byte integer in this case)
     # first argument is name of variable, second is datatype, third is
     # a tuple with the names of dimensions.
-    data = ncfile.createVariable('data',np.dtype('float32').char,('y','x'))
+    data = ncfile.createVariable('data',np.dtype('float32').char,('x','y'))
     data.setncattr("Unhidden","test")
     # write data to variable.
     data[:] = data_out
