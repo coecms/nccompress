@@ -25,7 +25,7 @@ def is_netCDF_compressed(ncfile):
         isnetCDF=True
         iscompressed = is_compressed(fh)
         fh.close
-    except RuntimeError:
+    except:
         # Don't do anything
         pass
     return isnetCDF, iscompressed
@@ -71,12 +71,14 @@ def parse_args(arglist):
 
     return parser.parse_args(arglist)
     
-def main(args):
+def find_files(args):
     
     # verbose=args.verbose
 
     findcompressed = args.compressed
     finduncompressed = args.uncompressed
+
+    found_files = []
 
     # If neither are specified make them both true, find any kind of netCDF file
     if not finduncompressed and not findcompressed:
@@ -131,11 +133,20 @@ def main(args):
                 if isnetCDF:
                     if iscompressed:
                         ncompressed += 1
-                        if findcompressed: sys.stdout.write(filepath+"\n")
+                        if findcompressed: found_files.append(filepath)
                     else:
                         nuncompressed += 1
-                        if finduncompressed: sys.stdout.write(filepath+"\n")
+                        if finduncompressed: found_files.append(filepath)
 
+    return found_files
+
+def main(args):
+
+    found_files = find_files(args)
+
+    if found_files:
+        for file in found_files:
+            sys.stdout.write(file+"\n")
                 
 def main_parse_args(arglist):
     """
