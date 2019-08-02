@@ -23,6 +23,7 @@ install:
     - pip install --upgrade pytest numpy netCDF4
 script:
     - python --version
+    - pip install .
     - py.test -s test
 after_success:
     - coverage run --source=n2nc,nc_compress,test/test_nc2nc.py,test/test_nc_compress.py -m py.test
