@@ -70,6 +70,14 @@ def test_run_compress():
 
     assert nccompress.are_equal('simple_xy.run_nc2nc.nc','simple_xy.run_nccopy.nc',verbose=True)
 
+def test_is_netCDF():
+    assert nccompress.is_netCDF('simple_xy.nc')
+    assert nccompress.is_netCDF('simple_xy.run_nc2nc.nc')
+    assert nccompress.is_netCDF('simple_xy.nc') == 'NETCDF4_CLASSIC'
+    assert nccompress.is_netCDF('simple_xy.run_nc2nc.nc') == 'NETCDF4_CLASSIC'
+    # Test classic model
+    # assert not nccompress.is_compressed('simple_xy.classic.nc')
+
 def test_is_compressed():
     assert not nccompress.is_compressed('simple_xy.nc')
     assert nccompress.is_compressed('simple_xy.run_nc2nc.nc')

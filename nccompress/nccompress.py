@@ -56,7 +56,7 @@ def is_netCDF(ncfile):
     try:
         tmp = nc.Dataset(ncfile)
         tmp.close()
-        return True
+        return tmp.file_format
     except netcdf4exception:
         return False
 
