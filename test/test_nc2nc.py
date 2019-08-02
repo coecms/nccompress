@@ -26,7 +26,7 @@ from nccompress import nc2nc
 verbose = True
 
 
-ncfiles =['simple_xy.nc']
+ncfiles =['simple_xy.nc', 'simple_xy_noclassic.nc']
 
 def setup_module(module):
     if verbose: print ("setup_module      module:%s" % module.__name__)

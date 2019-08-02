@@ -27,7 +27,7 @@ from glob import glob
 
 verbose = True
 
-ncfiles =['simple_xy.nc']
+ncfiles =['simple_xy.nc', 'simple_xy_noclassic.nc']
 
 def setup_module(module):
     if verbose: print ("setup_module      module:%s" % module.__name__)
@@ -63,8 +63,8 @@ def test_find():
     args = ncfind.parse_args(arguments)
     found = ncfind.find_files(args)
     found = [os.path.normpath(file) for file in found]
-    assert(1 == len(found))
-    assert(found == files[0:1])
+    assert(2 == len(found))
+    assert(found == files[0:2])
 
     arguments = ['-c']
     arguments.extend(files)
@@ -72,6 +72,6 @@ def test_find():
     found = ncfind.find_files(args)
     found = [os.path.normpath(file) for file in found]
     assert(1 == len(found))
-    assert(found == files[1:])
+    assert(found == files[-1:])
 
 
