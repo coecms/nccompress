@@ -98,7 +98,7 @@ def are_equal(infile,outfile,verbose):
         return False
     return True
 
-def nc2nc_cmd(infile,outfile,level,shuffle,verbose,buffersize,timing):
+def nc2nc_cmd(infile,outfile,level,shuffle,verbose,chunksize,buffersize,timing):
 
     cmd = []
     if timing:
@@ -112,6 +112,10 @@ def nc2nc_cmd(infile,outfile,level,shuffle,verbose,buffersize,timing):
     cmd.extend([nc2nc,'-d',str(level)])
     if (not shuffle): cmd.append('-n')
     # if verbose: cmd.append('-v')
+    if chunksize:
+        cmd.append('-s')
+        # All command line options have to be a string
+        cmd.append(str(chunksize))
     if buffersize:
         cmd.append('-b')
         # All command line options have to be a string
@@ -163,7 +167,7 @@ def check_and_overwrite(state,verbose,maxcompress):
         else:
             state['error'] = False
 
-def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,buffersize=50,paranoid=False,
+def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,chunksize=64,buffersize=500,paranoid=False,
                  overwrite=False,nccopy=False,maxcompress=10,timing=False):
 
     # Initialise state container
@@ -201,7 +205,7 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,buffersize=50
     if nccopy:
         cmd = nccopy_cmd(infile,outfile,level,shuffle,verbose,buffersize,timing)
     else:
-        cmd = nc2nc_cmd(infile,outfile,level,shuffle,verbose,buffersize,timing)
+        cmd = nc2nc_cmd(infile,outfile,level,shuffle,verbose,chunksize,buffersize,timing)
 
     output = ''
     if verbose: print (' '.join(cmd))
@@ -227,7 +231,8 @@ def log_result(result):
     global result_list
     result_list.append(result)
 
-def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,clean,verbose,buffersize,nccopy,paranoid,numproc,timing):
+def compress_files(path, files, tmpdir, overwrite, maxcompress, level, shuffle, force, clean, 
+                   verbose, chunksize, buffersize, nccopy, paranoid, numproc, timing):
 
     total_size_new = 0
     total_size_old = 0
@@ -287,7 +292,7 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
                 continue
 
         # Try compressing the data
-        pool.apply_async(run_compress, args=(infile,outfile,level,shuffle,verbose,buffersize,paranoid,overwrite,nccopy,maxcompress,timing), callback=log_result)
+        pool.apply_async(run_compress, args=(infile,outfile,level,shuffle,verbose,chunksize,buffersize,paranoid,overwrite,nccopy,maxcompress,timing), callback=log_result)
 
     pool.close()
     pool.join()
@@ -358,7 +363,8 @@ def parse_args(arglist):
     parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
     # parser.add_argument("-l","--limited", help="Change unlimited dimension to fixed size (default is to not squash unlimited)", action='store_true')
     parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
-    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MB (default=50)", type=int, default=50)
+    parser.add_argument("-s","--chunksize", help="Set chunksize - total size of one chunk in KiB (default=64)", type=int, default=64)
+    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MB (default=500)", type=int, default=500)
     parser.add_argument("-t","--tmpdir", help="Specify temporary directory to save compressed files", default='tmp.nc_compress')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("-r","--recursive", help="Recursively descend directories compressing all netCDF files (default False)", action='store_true')
@@ -377,8 +383,6 @@ def parse_args(arglist):
 
 def main(args):
     
-    verbose=args.verbose
-
     # We won't make users specify parallel if they've specified a number of processors
     if args.numproc: args.parallel = True
 
@@ -413,7 +417,22 @@ def main(args):
                     break
                 else:
                     # Compress all the files in this directory
-                    compress_files(root,files,args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid,numproc,args.timing)
+                    compress_files(root,
+                                   files,
+                                   args.tmpdir,
+                                   args.overwrite,
+                                   args.maxcompress,
+                                   args.dlevel,
+                                   not args.noshuffle,
+                                   args.force,
+                                   args.clean,
+                                   args.verbose,
+                                   args.chunksize,
+                                   args.buffersize,
+                                   args.nccopy,
+                                   args.paranoid,
+                                   numproc,
+                                   args.timing)
                     # Note we've traversed this directory but set directory to an empty list
                     filedict[root] = []
         else:
@@ -427,7 +446,22 @@ def main(args):
     # are named the same, just in a separate temporary sub directory.
     for directory in filedict:
         if len(filedict[directory]) == 0: continue
-        compress_files(directory,filedict[directory],args.tmpdir,args.overwrite,args.maxcompress,args.dlevel,not args.noshuffle,args.force,args.clean,verbose,args.buffersize,args.nccopy,args.paranoid,numproc,args.timing)
+        compress_files(directory,
+                       filedict[directory],
+                       args.tmpdir,
+                       args.overwrite,
+                       args.maxcompress,
+                       args.dlevel,
+                       not args.noshuffle,
+                       args.force,
+                       args.clean,
+                       args.verbose,
+                       args.chunksize,
+                       args.buffersize,
+                       args.nccopy,
+                       args.paranoid,
+                       numproc,
+                       args.timing)
 
                 
 def main_parse_args(arglist):

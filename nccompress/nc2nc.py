@@ -164,7 +164,7 @@ def chunk_shape_nD(varShape, valSize=4, chunkSize=4096, minDim=1):
 
 
 def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher32=False,
-    clobber=False, verbose=False, classic=True, lsd_dict=None, vars=None, buffersize=51200, mindim=1,ignoreformat=False):
+    clobber=False, verbose=False, classic=True, lsd_dict=None, vars=None, chunksize=4, buffersize=50, mindim=1,ignoreformat=False):
     """convert a netcdf file (filename_o) to another netcdf file (filename_d)
     The default format is 'NETCDF4_classic', but can be set to NETCDF4 if classic=False.
     If the lsd_dict is not None, variable names corresponding to the keys of the dict
@@ -197,8 +197,10 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         ncfile_d = Dataset(filename_d,'w',clobber=clobber,format='NETCDF4')
     mval = 1.e30 # missing value if unpackshort=True
 
-    # Copy buffer specified in MB, so convert to bytes
-    buffersize = 1000000*buffersize
+    # Copy buffer specified in MiB, so convert to bytes
+    buffersize = buffersize*(1024**2)
+    # Chunk size specified in KiB, so convert to bytes
+    chunksize = chunksize*1024
 
     # create dimensions. Check for unlimited dim.
     unlimdimname = False
@@ -257,7 +259,7 @@ def nc2nc(filename_o, filename_d, zlib=True, complevel=5, shuffle=True, fletcher
         # check we have a mapping from the type to a number of bytes
         if ncvar.dtype.char in dtypes: 
             if verbose: sys.stdout.write('Variable shape: %s\n' % str(ncvar.shape))
-            if (ncvar.shape != ()): chunksizes=chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],minDim=mindim)
+            if (ncvar.shape != ()): chunksizes=chunk_shape_nD(ncvar.shape,valSize=dtypes[ncvar.dtype.char],minDim=mindim,chunkSize=chunksize)
             if verbose: sys.stdout.write('Chunk sizes: %s\n' % str(chunksizes))
         else:
             sys.stderr.write("This datatype not supported: dtype : %s\n" % ncvar.dtype.char)
@@ -339,7 +341,8 @@ def parse_args(arglist):
     parser = argparse.ArgumentParser(description="Make a copy of a netCDF file with automatic chunk sizing")
     parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
     parser.add_argument("-m","--mindim", help="Minimum dimension of chunk. Valid values 1-dimsize", type=positive_int, default=1)
-    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MB (default=50)", type=int, default=50)
+    parser.add_argument("-s","--chunksize", help="Set chunksize - total size of one chunk in KiB (default=64)", type=int, default=64)
+    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MiB (default=500)", type=int, default=500)
     parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("-c","--classic", help="use NETCDF4_CLASSIC output instead of NETCDF4 (default true)", action='store_false')
@@ -363,7 +366,7 @@ def main(args):
     # copy the data from origin to destination
     nc2nc(args.origin, args.destination, zlib=zlib, complevel=args.dlevel, shuffle=not args.noshuffle,
         fletcher32=args.fletcher32, clobber=args.overwrite, lsd_dict=args.quantize,
-        verbose=verbose, vars=args.vars, classic=args.classic, buffersize=args.buffersize, ignoreformat=args.ignoreformat)
+        verbose=verbose, vars=args.vars, classic=args.classic, chunksize=args.chunksize, buffersize=args.buffersize, ignoreformat=args.ignoreformat)
                 
 def main_parse_args(arglist):
     """
