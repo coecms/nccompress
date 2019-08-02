@@ -13,6 +13,13 @@ import operator
 import numpy as np
 import numpy.ma as ma
 
+if (sys.version_info > (3, 0)):
+     # Python 3 code in this block
+     netcdf4exception = OSError
+else:
+     # Python 2 code in this block
+     netcdf4exception = IOError
+
 # A couple of hard-wired executable paths that might need changing
 
 def is_netCDF_compressed(ncfile):
@@ -25,7 +32,7 @@ def is_netCDF_compressed(ncfile):
         isnetCDF=True
         iscompressed = is_compressed(fh)
         fh.close
-    except:
+    except netcdf4exception:
         # Don't do anything
         pass
     return isnetCDF, iscompressed
