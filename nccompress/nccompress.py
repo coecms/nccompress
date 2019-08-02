@@ -55,15 +55,20 @@ def is_netCDF(ncfile):
     """
     try:
         tmp = nc.Dataset(ncfile)
-        tmp.close()
-        return tmp.file_format
+        format = tmp.file_format
+        compressed = is_compressed(tmp)
+        # No need to close, is done in is_compressed
+        return (format, compressed)
     except netcdf4exception:
-        return False
+        return (False, None)
 
 def is_compressed(ncfile):
     """ Test if netcdfile is compressed
     """
-    tmp = nc.Dataset(ncfile)
+    if type(ncfile).__name__ == 'Dataset':
+        tmp = ncfile
+    else:
+        tmp = nc.Dataset(ncfile)
     compressed=False
     # netCDF3 files have no filters attribute, and no compression
     # should use data_model instead of file_format in future
@@ -263,14 +268,18 @@ def compress_files(path,files,tmpdir,overwrite,maxcompress,level,shuffle,force,c
         outfile = os.path.join(outdir,file)
 
         # Make sure we're dealing with a netCDF file
-        if is_netCDF(infile):
+        (ncformat, compressed) = is_netCDF(infile)
+        if ncformat:
+            if ncformat == 'NETCDF4' and not nccopy:
+                sys.stderr.write("Cannot compress {} with nc2nc as it is NETCDF4 format, switching to nccopy".format(infile))
+                nccopy = True
             if verbose: sys.stdout.write( "Compressing %s, deflate level = %s, shuffle is on: %s\n" % (infile,level,shuffle) )
         else:
             if verbose: print('Not a netCDF file: ' + infile)
             continue
 
         # Check to see if the input file is already compressed
-        if is_compressed(infile):
+        if compressed:
             if force:
                 if verbose: sys.stdout.write("Already compressed %s but forcing overwrite\n" % infile)
             else:
