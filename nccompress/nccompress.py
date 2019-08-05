@@ -377,7 +377,7 @@ def parse_args(arglist):
     parser.add_argument("-np","--numproc", help="Specify the number of processes to use in parallel operation", type=int, default=1)
     parser.add_argument("--nccopy", help="Use nccopy instead of nc2nc (default False)", action='store_true')
     parser.add_argument("--timing", help="Collect timing statistics when compressing each file (default False)", action='store_true')
-    parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='+')
+    parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='*', default=sys.stdin)
 
     return parser.parse_args(arglist)
 
@@ -397,6 +397,7 @@ def main(args):
     # Loop over all the inputs from the command line. These can be either file globs
     # or directory names. In either case we'll group them by directory
     for ncinput in args.inputs:
+        ncinput = ncinput.rstrip('\r\n')
         if not os.path.exists(ncinput):
             print ("Input does not exist: {} .. skipping".format(ncinput))
             continue
