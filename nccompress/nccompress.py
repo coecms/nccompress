@@ -25,13 +25,13 @@ import netCDF4 as nc
 import argparse
 import re
 from warnings import warn
-from shutil import move
+from shutil import move, which
 from collections import defaultdict
 import math
 import operator
 import numpy as np
 import numpy.ma as ma
-import multiprocessing as mp
+import multiprocessing.dummy as mp
 
 if (sys.version_info > (3, 0)):
      # Python 3 code in this block
@@ -47,6 +47,8 @@ timecmd='/usr/bin/time'
 nccopy='nccopy'
 nc2nc='nc2nc'
 cdocmd='cdo'
+
+cdofound = None
 
 result_list=[]
     
@@ -86,17 +88,31 @@ def are_equal(infile,outfile,verbose):
     """ Run cdo diffn on the input and output netCDF files to ensure
         they are identical
     """
-    cmd = [cdocmd,'diffn']
-    cmd.append(infile)
-    cmd.append(outfile)
-    if verbose: print (' '.join(cmd))
-    output = ''
-    try:
-        output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
-    except Exception as e:
-        print("Problem comparing two netCDF files: {}\n Exception: {}".format(" ".join(cmd), e.output))
-        return False
-    return True
+    global cdofound
+    
+    if cdofound is None:
+        # None if executable not found
+        exepath = which(cdocmd)
+        if exepath is None:
+            cdofound = False
+        else:
+            cdofound = True
+
+    if cdofound:
+        cmd = [cdocmd,'diffn']
+        cmd.append(infile)
+        cmd.append(outfile)
+        if verbose: print (' '.join(cmd))
+        output = ''
+        try:
+            output = subprocess.check_output(cmd,stderr=subprocess.STDOUT)
+        except Exception as e:
+            if verbose: print("Problem comparing two netCDF files: {}\n Exception: {}".format(" ".join(cmd), e.output))
+            return False
+        return True
+    else:
+        print("cdo not found in PATH. File checks and paranoid mode disabled")
+        return None
 
 def nc2nc_cmd(infile,outfile,level,shuffle,verbose,chunksize,buffersize,timing):
 
@@ -188,19 +204,28 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,chunksize=64,
         # Ok, we're going to be paranoid here, because this could be a left over
         # half compressed file from a previous run. We do not want to copy that
         # over our data
-        if not are_equal(infile,outfile,verbose):
-            sys.stdout.write("Output file %s exists, but is not the same as the input %s\n" % (outfile,infile))
-            sys.stdout.write("Deleting output and recompressing\n")
-            # Delete compressed file, will continue and compress afresh
-            os.unlink(outfile)
-        else:
+
+        # Note to self: might need to wrap this in a try/except block for debugging
+        identical_files = are_equal(infile, outfile, verbose)
+
+        if identical_files:
             if verbose: sys.stdout.write("Output file %s exists: skipping\n" % outfile)
+            state['output'] = "Output file {} exists: skipping".format(outfile)
             state['comp_size'] = os.path.getsize(outfile);
             if overwrite:
                 # Perform checks on compressed data, return result in state. Need to make
                 # this into an object ...
                 check_and_overwrite(state,verbose,maxcompress)
+            sys.stdout.flush()
             return state
+        else:
+            if identical_files is None:
+                sys.stdout.write("Output file %s exists, but cannot determine if it is same as the input %s\n" % (outfile,infile))
+            else:
+                sys.stdout.write("Output file %s exists, but is not the same as the input %s\n" % (outfile,infile))
+            sys.stdout.write("Deleting output and recompressing\n")
+            # Delete compressed file, will continue and compress afresh
+            os.unlink(outfile)
 
     if nccopy:
         cmd = nccopy_cmd(infile,outfile,level,shuffle,verbose,buffersize,timing)
@@ -224,6 +249,7 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,chunksize=64,
             # this into an object ...
             check_and_overwrite(state,verbose,maxcompress)
 
+    sys.stdout.flush()
     return state
 
 def log_result(result):
@@ -243,7 +269,7 @@ def compress_files(path, files, tmpdir, overwrite, maxcompress, level, shuffle, 
     global result_list
     result_list[:] = []
 
-    pool = mp.Pool(processes=numproc,maxtasksperchild=50)
+    pool = mp.Pool(processes=numproc) #,maxtasksperchild=50)
 
     # Create our temporary directory
     outdir = os.path.join(path,tmpdir)
@@ -276,7 +302,7 @@ def compress_files(path, files, tmpdir, overwrite, maxcompress, level, shuffle, 
         (ncformat, compressed) = is_netCDF(infile)
         if ncformat:
             if ncformat == 'NETCDF4' and not nccopy:
-                sys.stderr.write("Cannot compress {} with nc2nc as it is NETCDF4 format, switching to nccopy".format(infile))
+                sys.stderr.write("Cannot compress {} with nc2nc as it is NETCDF4 format, switching to nccopy\n".format(infile))
                 nccopy = True
             if verbose: sys.stdout.write( "Compressing %s, deflate level = %s, shuffle is on: %s\n" % (infile,level,shuffle) )
         else:
@@ -363,8 +389,8 @@ def parse_args(arglist):
     parser.add_argument("-d","--dlevel", help="Set deflate level. Valid values 0-9 (default=5)", type=int, default=5, choices=range(0,10), metavar='{1-9}')
     # parser.add_argument("-l","--limited", help="Change unlimited dimension to fixed size (default is to not squash unlimited)", action='store_true')
     parser.add_argument("-n","--noshuffle", help="Don't shuffle on deflation (default is to shuffle)", action='store_true')
-    parser.add_argument("-s","--chunksize", help="Set chunksize - total size of one chunk in KiB (default=64)", type=int, default=64)
-    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MB (default=500)", type=int, default=500)
+    parser.add_argument("-s","--chunksize", help="Set chunksize - total size of one chunk in KiB (default=64), nc2nc only", type=int, default=64)
+    parser.add_argument("-b","--buffersize", help="Set size of copy buffer in MiB (default=500), nc2nc only", type=int, default=500)
     parser.add_argument("-t","--tmpdir", help="Specify temporary directory to save compressed files", default='tmp.nc_compress')
     parser.add_argument("-v","--verbose", help="Verbose output", action='store_true')
     parser.add_argument("-r","--recursive", help="Recursively descend directories compressing all netCDF files (default False)", action='store_true')
@@ -375,9 +401,10 @@ def parse_args(arglist):
     parser.add_argument("-c","--clean", help="Clean tmpdir by removing existing compressed files before starting (default False)", action='store_true')
     parser.add_argument("-pa","--parallel", help="Compress files in parallel", action='store_true')
     parser.add_argument("-np","--numproc", help="Specify the number of processes to use in parallel operation", type=int, default=1)
+    parser.add_argument("-ff","--fromfile", help="Read files to be compressed from a text file")
     parser.add_argument("--nccopy", help="Use nccopy instead of nc2nc (default False)", action='store_true')
     parser.add_argument("--timing", help="Collect timing statistics when compressing each file (default False)", action='store_true')
-    parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories)", nargs='*', default=sys.stdin)
+    parser.add_argument("inputs", help="netCDF files or directories (-r must be specified to recursively descend directories). Can accept piped arguments.", nargs='*', default=sys.stdin)
 
     return parser.parse_args(arglist)
 
@@ -394,10 +421,16 @@ def main(args):
 
     filedict = defaultdict(list)
 
+    if args.fromfile:
+        args.inputs = open(args.fromfile)
+
     # Loop over all the inputs from the command line. These can be either file globs
     # or directory names. In either case we'll group them by directory
     for ncinput in args.inputs:
         ncinput = ncinput.rstrip('\r\n')
+        if args.tmpdir in ncinput:
+            print ("tmpdir in input path: {} .. skipping".format(ncinput))
+            continue
         if not os.path.exists(ncinput):
             print ("Input does not exist: {} .. skipping".format(ncinput))
             continue
@@ -441,11 +474,15 @@ def main(args):
             if (root == ''): root = "./"
             filedict[root].append(file)
 
+    if args.fromfile:
+        args.inputs.close()
+
     # Files that were specified directly on the command line are compressed by directory.
     # We only create a temporary directory once, and can then clean up after ourselves.
     # Also makes it easier to run some checks to ensure compression is ok, as all the files
     # are named the same, just in a separate temporary sub directory.
     for directory in filedict:
+        print(directory, filedict[directory])
         if len(filedict[directory]) == 0: continue
         compress_files(directory,
                        filedict[directory],

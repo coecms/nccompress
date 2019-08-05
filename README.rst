@@ -115,47 +115,56 @@ to easily step through and compress each file in turn:
 
 ::
 
-    $ ./nccompress -h
-    usage: nccompress [-h] [-d {1-9}] [-n] [-b BUFFERSIZE] [-t TMPDIR] [-v] [-r]
-                       [-o] [-m MAXCOMPRESS] [-p] [-f] [-c] [-pa] [-np NUMPROC]
-                       [--nccopy]
-                       inputs [inputs ...]
+    $ nccompress --help
+    usage: nccompress [-h] [-d {1-9}] [-n] [-s CHUNKSIZE] [-b BUFFERSIZE]
+                    [-t TMPDIR] [-v] [-r] [-o] [-m MAXCOMPRESS] [-p] [-f] [-c]
+                    [-pa] [-np NUMPROC] [-ff FROMFILE] [--nccopy] [--timing]
+                    [inputs [inputs ...]]
 
     Run nc2nc (or nccopy) on a number of netCDF files
 
     positional arguments:
-      inputs                netCDF files or directories (-r must be specified to
-                            recursively descend directories)
+    inputs                netCDF files or directories (-r must be specified to
+                            recursively descend directories). Can accept piped
+                            arguments.
 
     optional arguments:
-      -h, --help            show this help message and exit
-      -d {1-9}, --dlevel {1-9}
+    -h, --help            show this help message and exit
+    -d {1-9}, --dlevel {1-9}
                             Set deflate level. Valid values 0-9 (default=5)
-      -n, --noshuffle       Don't shuffle on deflation (default is to shuffle)
-      -b BUFFERSIZE, --buffersize BUFFERSIZE
-                            Set size of copy buffer in MB (default=50)
-      -t TMPDIR, --tmpdir TMPDIR
+    -n, --noshuffle       Don't shuffle on deflation (default is to shuffle)
+    -s CHUNKSIZE, --chunksize CHUNKSIZE
+                        Set chunksize - total size of one chunk in KiB
+                        (default=64), nc2nc only
+    -b BUFFERSIZE, --buffersize BUFFERSIZE
+                        Set size of copy buffer in MiB (default=500), nc2nc only
+    -t TMPDIR, --tmpdir TMPDIR
                             Specify temporary directory to save compressed files
-      -v, --verbose         Verbose output
-      -r, --recursive       Recursively descend directories compressing all netCDF
+    -v, --verbose         Verbose output
+    -r, --recursive       Recursively descend directories compressing all netCDF
                             files (default False)
-      -o, --overwrite       Overwrite original files with compressed versions
+    -o, --overwrite       Overwrite original files with compressed versions
                             (default is to not overwrite)
-      -m MAXCOMPRESS, --maxcompress MAXCOMPRESS
+    -m MAXCOMPRESS, --maxcompress MAXCOMPRESS
                             Set a maximum compression as a paranoid check on
                             success of nccopy (default is 10, set to zero for no
                             check)
-      -p, --paranoid        Paranoid check : run nco ndiff on the resulting file
+    -p, --paranoid        Paranoid check : run nco ndiff on the resulting file
                             ensure no data has been altered
-      -f, --force           Force compression, even if input file is already
+    -f, --force           Force compression, even if input file is already
                             compressed (default False)
-      -c, --clean           Clean tmpdir by removing existing compressed files
+    -c, --clean           Clean tmpdir by removing existing compressed files
                             before starting (default False)
-      -pa, --parallel       Compress files in parallel
-      -np NUMPROC, --numproc NUMPROC
+    -pa, --parallel       Compress files in parallel
+    -np NUMPROC, --numproc NUMPROC
                             Specify the number of processes to use in parallel
                             operation
-      --nccopy              Use nccopy instead of nc2nc (default False)
+    -ff FROMFILE, --fromfile FROMFILE
+                            Read files to be compressed from a text file
+    --nccopy              Use nccopy instead of nc2nc (default False)
+    --timing              Collect timing statistics when compressing each file
+                            (default False)
+
 
 The simplest way to invoke the program would be with a single file:
 
@@ -170,7 +179,7 @@ or using a wildcard expression:
     nccompress ice*.nc
 
 You can also specify one or more directory names in combination with the
-recursive flag (-r) and the program will recursively descend into those
+recursive flag (`-r`) and the program will recursively descend into those
 directories and find all netCDF files contained therein. For example, a
 directory listing might look like so:
 
@@ -182,6 +191,13 @@ directory listing might look like so:
 
 with a number of sub-directories, all containing netCDF files.
 
+Note that the only way `nccompress` can determine if files are netCDF
+format is to try and open them. If there are large numbers of non-netCDF
+files, or even already compressed netCDF files, in the directory tree 
+this can severely slow down the process. In this case it is best to
+remove non-essential files before running this tool, or use some other
+approaches detailed below.
+
 It is a good idea to do a trial run and make sure it functions properly.
 For example, this will compress the netCDF files in just one of the
 directories:
@@ -190,15 +206,16 @@ directories:
 
     nccompress -p -r data/output001
 
-Once completed there will be a new subdirectory called tmp.nc_compress
-inside the directory output001. It will contain compressed copies of all
+Once completed there will be a new subdirectory called `tmp.nc_compress`
+inside the directory `output001`. It will contain compressed copies of all
 the netCDF files from the directory above. You can check the compressed
-copies to make sure they are correct. The paranoid option (-p) calls an
-nco command to check that the variables contained in the two files are
-the same. You can use the paranoid option routinely, thought it will
+copies to make sure they are correct. The paranoid option (`-p`) calls
+`nco diffn` to check that the variables contained in the two files are
+the same. The `cdo` program must be present in your `PATH`. 
+You can use the paranoid option routinely, thought it will
 make the process more time consuming. It is a good idea to use it in the
 testing phase. You should also check the compressed copies manually to
-make sure they look ok, and if so, re-run the command with the -o option
+make sure they look ok, and if so, re-run the command with the `-o` option
 (overwrite):
 
 ::
@@ -206,11 +223,11 @@ make sure they look ok, and if so, re-run the command with the -o option
     nccompress -r -o data/output001
 
 and it will find the already compressed files, copy them over the
-originals and delete the temporary directory tmp.nc_compress. It won't
+originals and delete the temporary directory `tmp.nc_compress`. It won't
 try to compress the files again. It also won't compress already
 compressed files, so, for example, if you were happy that the
 compression was working well you could compress the entire data
-directory, and the already compressed files in output001 will not be
+directory, and the already compressed files in `output001` will not be
 re-compressed.
 
 So, by default, nccompress **does not overwrite the original files**.
@@ -235,9 +252,32 @@ It is also possible to use wildcards type operations, e.g.
 
     nccompress -r -o run[1-5]/output*/ocean*.nc random.nc ice*.nc
 
-The nccompress program just sorts out finding files/directories etc, it
+or use a tool like `find` to locate the files to be compressed and
+pipe that into `nccompress`:
+
+::
+
+    find . -iname "*.nc" | nccompress -o
+
+Using `find` to locate files can be a good approach if the files to
+be compressed are a relatively small proportion of all the files
+in the directory tree. 
+
+Optionally a file containing the paths to the files to be compressed
+can be specified. One filepath per line.
+
+This can be useful to use other tools to modify
+the list as required. Again, find can be used to generate a suitable
+list, e.g.
+
+::
+
+    find . -iname "*.nc" > list.txt
+    nccompress -o --filelist list.txt
+
+The nccompress program handles finding files/directories etc, it
 calls nc2nc to do the compression. Using the option `--nccopy` forces
-nccompress to use the nccopy program in place of nc2nc, though the
+nccompress to use the nccopy program in place of `nc2nc`, though the
 netcdf package must already be loaded for this to work.
 
 You can tell nccompress to work on multple files simultaneously with
