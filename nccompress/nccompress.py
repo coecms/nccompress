@@ -31,7 +31,7 @@ import math
 import operator
 import numpy as np
 import numpy.ma as ma
-import multiprocessing.dummy as mp
+import multiprocessing as mp
 
 if (sys.version_info > (3, 0)):
      # Python 3 code in this block
@@ -216,7 +216,6 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,chunksize=64,
                 # Perform checks on compressed data, return result in state. Need to make
                 # this into an object ...
                 check_and_overwrite(state,verbose,maxcompress)
-            sys.stdout.flush()
             return state
         else:
             if identical_files is None:
@@ -249,7 +248,6 @@ def run_compress(infile,outfile,level=5,shuffle=True,verbose=False,chunksize=64,
             # this into an object ...
             check_and_overwrite(state,verbose,maxcompress)
 
-    sys.stdout.flush()
     return state
 
 def log_result(result):
@@ -269,7 +267,7 @@ def compress_files(path, files, tmpdir, overwrite, maxcompress, level, shuffle, 
     global result_list
     result_list[:] = []
 
-    pool = mp.Pool(processes=numproc) #,maxtasksperchild=50)
+    pool = mp.Pool(processes=numproc,maxtasksperchild=50)
 
     # Create our temporary directory
     outdir = os.path.join(path,tmpdir)
@@ -482,7 +480,6 @@ def main(args):
     # Also makes it easier to run some checks to ensure compression is ok, as all the files
     # are named the same, just in a separate temporary sub directory.
     for directory in filedict:
-        print(directory, filedict[directory])
         if len(filedict[directory]) == 0: continue
         compress_files(directory,
                        filedict[directory],
