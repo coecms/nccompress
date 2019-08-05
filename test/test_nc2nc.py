@@ -108,3 +108,10 @@ def test_nc2nc():
         pass
 
     nc2nc.nc2nc(ncfiles[0]+'2nc.nc4',ncfiles[0]+'2nc.2.nc4',clobber=True,classic=False,ignoreformat=True)
+
+    # Should make chunksize the same size as the variable
+    nc2nc.nc2nc(ncfiles[0], ncfiles[0]+'2nc.enormachunk.nc', clobber=True, chunksize=400)
+
+    ds = Dataset(ncfiles[0]+'2nc.enormachunk.nc')
+    data = ds.variables['data']
+    assert list(data.shape) == data.chunking()

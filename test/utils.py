@@ -22,7 +22,7 @@ def which(program):
     return None
 
 def remove_ncfiles(verbose=True):
-    for file in glob("*.nc"):
+    for file in glob("*.nc") + glob("*.nc4"):
         if (verbose): print("Removing {}".format(file))
         os.remove(file)
 
