@@ -10,7 +10,7 @@ Tool to compress directories of netCDF files
   :target: https://circleci.com/gh/coecms/nccompress
 .. content-marker-for-sphinx
 
-   nccompress
+nccompress
 ==========
 
 The nccompress package has been written to facilitate compressing netcdf
@@ -26,7 +26,7 @@ datasets. His two main limitations: it is slower than some other
 programs, and it can only compress netCDF3 or netCDF4 classic format.
 There is more detail in the following sections.
 
-The convenience utility ncinfo is also included, and though it has no
+The convenience utility ncvarinfo is also included, and though it has no
 direct relevance to compression, it is a convenient way to get a summary
 of the contents of a netCDF file.
 
@@ -58,14 +58,14 @@ and discriminate between compressed and uncompressed:
 
 There are other methods for finding files, namely the unix utility find
 utility. For example, to find all files in the directory "directoryname"
-which end in ".nc":
+which end in ``.nc``:
 
 ::
 
     find directoryname -iname "*.nc"
 
 However, if your netCDF files do not use the convention of ending in
-".nc" or cannot be systematically found based on filename, you can use
+``.nc`` or cannot be systematically found based on filename, you can use
 the ncfind to recursively descend into a directory structure looking for
 netCDF files:
 
@@ -97,7 +97,7 @@ du is the disk usage utility. The output looks something like this:
     1.1G    total
 
 It is even possible to combine the system find utility with ncfind,
-using a unix pipe (|). This command will find all files ending in ".nc",
+using a unix pipe (``|``). This command will find all files ending in ``.nc``,
 pipe the results to ncfind, and only those that are uncompressed will be
 printed to the screen:
 
@@ -179,7 +179,7 @@ or using a wildcard expression:
     nccompress ice*.nc
 
 You can also specify one or more directory names in combination with the
-recursive flag (`-r`) and the program will recursively descend into those
+recursive flag (``-r``) and the program will recursively descend into those
 directories and find all netCDF files contained therein. For example, a
 directory listing might look like so:
 
@@ -191,7 +191,7 @@ directory listing might look like so:
 
 with a number of sub-directories, all containing netCDF files.
 
-Note that the only way `nccompress` can determine if files are netCDF
+Note that the only way nccompress can determine if files are netCDF
 format is to try and open them. If there are large numbers of non-netCDF
 files, or even already compressed netCDF files, in the directory tree 
 this can severely slow down the process. In this case it is best to
@@ -206,16 +206,16 @@ directories:
 
     nccompress -p -r data/output001
 
-Once completed there will be a new subdirectory called `tmp.nc_compress`
-inside the directory `output001`. It will contain compressed copies of all
+Once completed there will be a new subdirectory called ``tmp.nc_compress``
+inside the directory ``output001``. It will contain compressed copies of all
 the netCDF files from the directory above. You can check the compressed
-copies to make sure they are correct. The paranoid option (`-p`) calls
-`nco diffn` to check that the variables contained in the two files are
-the same. The `cdo` program must be present in your `PATH`. 
+copies to make sure they are correct. The paranoid option (``-p``) calls
+``nco diffn`` to check that the variables contained in the two files are
+the same. The ``cdo`` program must be present in your ``PATH``. 
 You can use the paranoid option routinely, thought it will
 make the process more time consuming. It is a good idea to use it in the
 testing phase. You should also check the compressed copies manually to
-make sure they look ok, and if so, re-run the command with the `-o` option
+make sure they look ok, and if so, re-run the command with the ``-o`` option
 (overwrite):
 
 ::
@@ -223,21 +223,21 @@ make sure they look ok, and if so, re-run the command with the `-o` option
     nccompress -r -o data/output001
 
 and it will find the already compressed files, copy them over the
-originals and delete the temporary directory `tmp.nc_compress`. It won't
+originals and delete the temporary directory ``tmp.nc_compress``. It won't
 try to compress the files again. It also won't compress already
 compressed files, so, for example, if you were happy that the
 compression was working well you could compress the entire data
-directory, and the already compressed files in `output001` will not be
+directory, and the already compressed files in ``output001`` will not be
 re-compressed.
 
 So, by default, nccompress **does not overwrite the original files**.
-If you invoke it without the `-o` option it will create compressed
-copies in the tmp.nc_compress subdirectory and leave them there, which
+If you invoke it without the ``-o`` option it will create compressed
+copies in the ``tmp.nc_compress`` subdirectory and leave them there, which
 will consume more disk space! This is a feature, not a bug, but you need
 to be aware that this is how it functions.
 
 With large variables, which usually means large files (> 1GB) it is a
-good idea to specify a larger buffer size with the `-b` option, as it
+good idea to specify a larger buffer size with the ``-b`` option, as it
 will run faster. On raijin this may mean you need to run interactively
 with a higher memory (~10GB) or submit it as a copyq job. A typical
 buffer size might be 1000 -> 5000 (1->5 GB).
@@ -252,14 +252,14 @@ It is also possible to use wildcards type operations, e.g.
 
     nccompress -r -o run[1-5]/output*/ocean*.nc random.nc ice*.nc
 
-or use a tool like `find` to locate the files to be compressed and
-pipe that into `nccompress`:
+or use a tool like ``find`` to locate the files to be compressed and
+pipe that into nccompress:
 
 ::
 
     find . -iname "*.nc" | nccompress -o
 
-Using `find` to locate files can be a good approach if the files to
+Using ``find`` to locate files can be a good approach if the files to
 be compressed are a relatively small proportion of all the files
 in the directory tree. 
 
@@ -276,14 +276,14 @@ list, e.g.
     nccompress -o --filelist list.txt
 
 The nccompress program handles finding files/directories etc, it
-calls nc2nc to do the compression. Using the option `--nccopy` forces
-nccompress to use the nccopy program in place of `nc2nc`, though the
+calls nc2nc to do the compression. Using the option ``--nccopy`` forces
+nccompress to use the nccopy program in place of nc2nc, though the
 netcdf package must already be loaded for this to work.
 
 You can tell nccompress to work on multple files simultaneously with
-the `-pa` option. By default this will use all the physical processors
+the ``-pa`` option. By default this will use all the physical processors
 on the machine, or you can specify how many simultaneous processes you
-want to with `-np`, e.g.
+want to with ``-np``, e.g.
 
 ::
 
@@ -349,124 +349,131 @@ can only be accessed by calling it directly:
       -o, --overwrite       Write output file even if already it exists (default
                             is to not overwrite)
 
-With the vars option (-va) it is possible to select out only a subset of
+With the vars option (``-va``) it is possible to select out only a subset of
 variables to be copied to the destination file. By default the output
 file is netCDf4 classic, but this can be changed to netCDF4 using the
-`-c` option. It is also possible to specify a minimum dimension size for
-the chunks (-m). This may be desirable for a dataset that has one
+``-c`` option. It is also possible to specify a minimum dimension size for
+the chunks (``-m``). This may be desirable for a dataset that has one
 particularly long dimension,. The chunk dimensions would mirror this and
 be very large in this direction . If fast access is required from slices
-orthogonal to this direction performance might be improved setting this option to a number greater than 1.
+orthogonal to this direction performance might be improved setting this 
+option to a number greater than 1.
 
-## ncinfo
+ncvarinfo
+---------
 
-ncinfo is a convenient way to get a summary of the contents of a netCDF file.
-```
-./ncinfo -h
-usage: ncinfo [-h] [-v] [-t] [-d] [-a] [-va VARS] inputs [inputs ...]
+ncvarinfo is a convenient way to get a summary of the variables in a netCDF file.
 
-Output summary information about a netCDF file
+::
+    $ ncvarinfo -h
+    usage: ncvarinfo [-h] [-v] [-t] [-d] [-a] [-va VARS] inputs [inputs ...]
 
-positional arguments:
-  inputs                netCDF files
+    Output summary information about a netCDF file
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -v, --verbose         Verbose output
-  -t, --time            Show time variables
-  -d, --dims            Show dimensions
-  -a, --aggregate       Aggregate multiple netCDF files into one dataset
-  -va VARS, --vars VARS
-                        Show info for only specify variables
+    positional arguments:
+    inputs                netCDF files
 
-```
+    optional arguments:
+    -h, --help            show this help message and exit
+    -v, --verbose         Verbose output
+    -t, --time            Show time variables
+    -d, --dims            Show dimensions
+    -a, --aggregate       Aggregate multiple netCDF files into one dataset
+    -va VARS, --vars VARS
+                            Show info for only specify variables
+
 By default it prints out a simple summary of the variables in a netCDF file, but omitting dimensions and time related variables. e.g.
-```
-ncinfo output096/ocean_daily.nc
 
-output096/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
-geolon_t :: (1080, 1440)      :: tracer longitude
-geolat_t :: (1080, 1440)      :: tracer latitude
-geolon_c :: (1080, 1440)      :: uv longitude
-geolat_c :: (1080, 1440)      :: uv latitude
+::
+    $ ncvarinfo output096/ocean_daily.nc
 
-```
+    output096/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    geolon_t :: (1080, 1440)      :: tracer longitude
+    geolat_t :: (1080, 1440)      :: tracer latitude
+    geolon_c :: (1080, 1440)      :: uv longitude
+    geolat_c :: (1080, 1440)      :: uv latitude
+
+
 If you specify more than one file it will print the information for each file in turn
-```
-ncinfo output09?/ocean_daily.nc
 
-output096/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
-geolon_t :: (1080, 1440)      :: tracer longitude
-geolat_t :: (1080, 1440)      :: tracer latitude
-geolon_c :: (1080, 1440)      :: uv longitude
-geolat_c :: (1080, 1440)      :: uv latitude
+::
+    $ ncvarinfo output09?/ocean_daily.nc
 
-output097/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
-geolon_t :: (1080, 1440)      :: tracer longitude
-geolat_t :: (1080, 1440)      :: tracer latitude
-geolon_c :: (1080, 1440)      :: uv longitude
-geolat_c :: (1080, 1440)      :: uv latitude
+    output096/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    geolon_t :: (1080, 1440)      :: tracer longitude
+    geolat_t :: (1080, 1440)      :: tracer latitude
+    geolon_c :: (1080, 1440)      :: uv longitude
+    geolat_c :: (1080, 1440)      :: uv latitude
 
-output098/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
-geolon_t :: (1080, 1440)      :: tracer longitude
-geolat_t :: (1080, 1440)      :: tracer latitude
-geolon_c :: (1080, 1440)      :: uv longitude
-geolat_c :: (1080, 1440)      :: uv latitude
+    output097/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    geolon_t :: (1080, 1440)      :: tracer longitude
+    geolat_t :: (1080, 1440)      :: tracer latitude
+    geolon_c :: (1080, 1440)      :: uv longitude
+    geolat_c :: (1080, 1440)      :: uv latitude
 
-output099/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
-geolon_t :: (1080, 1440)      :: tracer longitude
-geolat_t :: (1080, 1440)      :: tracer latitude
-geolon_c :: (1080, 1440)      :: uv longitude
-geolat_c :: (1080, 1440)      :: uv latitude
-```
+    output098/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    geolon_t :: (1080, 1440)      :: tracer longitude
+    geolat_t :: (1080, 1440)      :: tracer latitude
+    geolon_c :: (1080, 1440)      :: uv longitude
+    geolat_c :: (1080, 1440)      :: uv latitude
+
+    output099/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x    :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y    :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    geolon_t :: (1080, 1440)      :: tracer longitude
+    geolat_t :: (1080, 1440)      :: tracer latitude
+    geolon_c :: (1080, 1440)      :: uv longitude
+    geolat_c :: (1080, 1440)      :: uv latitude
+
 If the files have the same structure it is possible to aggregate the data and display it as if it were contained in a single dataset:
-```
-ncinfo -a output09?/ocean_daily.nc
 
-Time steps:  1460  x  1.0 days
-tau_x    :: (1460, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y    :: (1460, 1080, 1440) :: j-directed wind stress forcing v-velocity
-geolon_t :: (1080, 1440)       :: tracer longitude
-geolat_t :: (1080, 1440)       :: tracer latitude
-geolon_c :: (1080, 1440)       :: uv longitude
-geolat_c :: (1080, 1440)       :: uv latitude
-```
+::
+
+    $ ncvarinfo -a output09?/ocean_daily.nc
+
+    Time steps:  1460  x  1.0 days
+    tau_x    :: (1460, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y    :: (1460, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    geolon_t :: (1080, 1440)       :: tracer longitude
+    geolat_t :: (1080, 1440)       :: tracer latitude
+    geolon_c :: (1080, 1440)       :: uv longitude
+    geolat_c :: (1080, 1440)       :: uv latitude
+
 You can also just request variables you are interested in to be output:
-```
-ncinfo -va tau_x -va tau_y output09?/ocean_daily.nc 
 
-output096/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+::
 
-output097/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    $ ncvarinfo -va tau_x -va tau_y output09?/ocean_daily.nc 
 
-output098/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+    output096/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
 
-output099/ocean_daily.nc
-Time steps:  365  x  1.0 days
-tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
-tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
-```
+    output097/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+
+    output098/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
+
+    output099/ocean_daily.nc
+    Time steps:  365  x  1.0 days
+    tau_x :: (365, 1080, 1440) :: i-directed wind stress forcing u-velocity
+    tau_y :: (365, 1080, 1440) :: j-directed wind stress forcing v-velocity
