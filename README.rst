@@ -56,8 +56,8 @@ and discriminate between compressed and uncompressed:
       -c, --compressed    Find only compressed netCDF files (default False)
      
 
-There are other methods for finding files, namely the unix utility find
-utility. For example, to find all files in the directory "directoryname"
+There are other methods for finding files, namely the unix utility ``find``
+utility. For example, to find all files in the directory ``directoryname``
 which end in ``.nc``:
 
 ::
@@ -81,14 +81,14 @@ files that are uncompressed:
     ncfind -r -u directoryname
 
 If you want to find out how much space these uncompressed files occupy
-you can combine this command with other unix utilities such as xargs and
-du:
+you can combine this command with other unix utilities such as ``xargs`` and
+``du``:
 
 ::
 
     ncfind -r -u directoryname | xargs du -h
 
-du is the disk usage utility. The output looks something like this:
+``du`` is the disk usage utility. The output looks something like this:
 
 ::
 
@@ -365,6 +365,7 @@ ncvarinfo
 ncvarinfo is a convenient way to get a summary of the variables in a netCDF file.
 
 ::
+
     $ ncvarinfo -h
     usage: ncvarinfo [-h] [-v] [-t] [-d] [-a] [-va VARS] inputs [inputs ...]
 
@@ -385,6 +386,7 @@ ncvarinfo is a convenient way to get a summary of the variables in a netCDF file
 By default it prints out a simple summary of the variables in a netCDF file, but omitting dimensions and time related variables. e.g.
 
 ::
+
     $ ncvarinfo output096/ocean_daily.nc
 
     output096/ocean_daily.nc
@@ -400,6 +402,7 @@ By default it prints out a simple summary of the variables in a netCDF file, but
 If you specify more than one file it will print the information for each file in turn
 
 ::
+
     $ ncvarinfo output09?/ocean_daily.nc
 
     output096/ocean_daily.nc
