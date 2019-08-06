@@ -298,13 +298,13 @@ nc2nc
 -----
 
 The nc2nc program was written because no existing tool had a generalised
-per variable chunking algorithm. The total chunk size is defined to be
-the file system block size (4096KB). The dimensions of the chunk are
-sized to be as close as possible to the same ratio as the dimensions of
-the data, with the limits that no dimension can be less than 1. This
-chunking scheme performs well for a wide range of data, but there will
-always be cases for certain types of access, or variable shape that this
-is not optimal. In those cases a different approach may be required.
+per variable chunking algorithm. The total chunk size defaults to 64KB,
+this this can be set with the ``--chunksize`` option. The dimensions of 
+the chunk are sized to be as close as possible to the same ratio as the 
+dimensions of the data, with the limits that no dimension can be less 
+than 1. This chunking scheme performs well for a wide range of data, but 
+there will always be cases for certain types of access, or variable shape 
+that this is not optimal. In those cases a different approach may be required.
 
 Be aware that nc2nc takes at least twice as long to compress an
 equivalent file as nccopy. In some cases with large files containing
