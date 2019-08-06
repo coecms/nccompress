@@ -299,7 +299,7 @@ nc2nc
 
 The nc2nc program was written because no existing tool had a generalised
 per variable chunking algorithm. The total chunk size defaults to 64KB,
-this this can be set with the ``--chunksize`` option. The dimensions of 
+this can be set with the ``--chunksize`` option. The dimensions of 
 the chunk are sized to be as close as possible to the same ratio as the 
 dimensions of the data, with the limits that no dimension can be less 
 than 1. This chunking scheme performs well for a wide range of data, but 
@@ -316,38 +316,44 @@ can only be accessed by calling it directly:
 ::
 
     $ nc2nc -h
-    usage: nc2nc [-h] [-d {1-9}] [-m MINDIM] [-b BUFFERSIZE] [-n] [-v] [-c] [-f]
-                 [-va VARS] [-q QUANTIZE] [-o]
-                 origin destination
+    usage: nc2nc [-h] [-d {1-9}] [-m MINDIM] [-s CHUNKSIZE] [-b BUFFERSIZE] [-n]
+                [-v] [-c] [-f] [-va VARS] [-q QUANTIZE] [-o] [-i]
+                origin destination
 
     Make a copy of a netCDF file with automatic chunk sizing
 
     positional arguments:
-      origin                netCDF file to be compressed
-      destination           netCDF output file
+    origin                netCDF file to be compressed
+    destination           netCDF output file
 
     optional arguments:
-      -h, --help            show this help message and exit
-      -d {1-9}, --dlevel {1-9}
+    -h, --help            show this help message and exit
+    -d {1-9}, --dlevel {1-9}
                             Set deflate level. Valid values 0-9 (default=5)
-      -m MINDIM, --mindim MINDIM
+    -m MINDIM, --mindim MINDIM
                             Minimum dimension of chunk. Valid values 1-dimsize
-      -b BUFFERSIZE, --buffersize BUFFERSIZE
-                            Set size of copy buffer in MB (default=50)
-      -n, --noshuffle       Don't shuffle on deflation (default is to shuffle)
-      -v, --verbose         Verbose output
-      -c, --classic         use NETCDF4_CLASSIC output instead of NETCDF4 (default
+    -s CHUNKSIZE, --chunksize CHUNKSIZE
+                            Set chunksize - total size of one chunk in KiB
+                            (default=64)
+    -b BUFFERSIZE, --buffersize BUFFERSIZE
+                            Set size of copy buffer in MiB (default=500)
+    -n, --noshuffle       Don't shuffle on deflation (default is to shuffle)
+    -v, --verbose         Verbose output
+    -c, --classic         use NETCDF4_CLASSIC output instead of NETCDF4 (default
                             true)
-      -f, --fletcher32      Activate Fletcher32 checksum
-      -va VARS, --vars VARS
+    -f, --fletcher32      Activate Fletcher32 checksum
+    -va VARS, --vars VARS
                             Specify variables to copy (default is to copy all)
-      -q QUANTIZE, --quantize QUANTIZE
+    -q QUANTIZE, --quantize QUANTIZE
                             Truncate data in variable to a given decimal
                             precision, e.g. -q speed=2 -q temp=0 causes variable
                             speed to be truncated to a precision of 0.01 and temp
                             to a precision of 1
-      -o, --overwrite       Write output file even if already it exists (default
+    -o, --overwrite       Write output file even if already it exists (default
                             is to not overwrite)
+    -i, --ignoreformat    Ignore warnings about netCDF4 formatted file: BE
+                        CAREFUL! (default false)
+
 
 With the vars option (``-va``) it is possible to select out only a subset of
 variables to be copied to the destination file. By default the output
