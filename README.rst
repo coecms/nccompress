@@ -32,10 +32,8 @@ of the contents of a netCDF file.
 
 Identifying files to be compressed
 ----------------------------------
-
 ncfind, part of the nccompress package, can be used to find netCDF files
 and discriminate between compressed and uncompressed:
-
 ::
 
     $ ncfind -h
@@ -62,7 +60,7 @@ which end in ``.nc``:
 
 ::
 
-    find directoryname -iname "*.nc"
+   find directoryname -iname "*.nc"
 
 However, if your netCDF files do not use the convention of ending in
 ``.nc`` or cannot be systematically found based on filename, you can use
@@ -238,9 +236,9 @@ to be aware that this is how it functions.
 
 With large variables, which usually means large files (> 1GB) it is a
 good idea to specify a larger buffer size with the ``-b`` option, as it
-will run faster. On raijin this may mean you need to run interactively
-with a higher memory (~10GB) or submit it as a copyq job. A typical
-buffer size might be 1000 -> 5000 (1->5 GB).
+will run faster. On Gadi, this may mean you need to submit an interactive 
+job on the compute nodes with a higher memory (~10GB) or submit it as a 
+copyq job. A typical buffer size might be 1000 -> 5000 (1->5 GB).
 
 It is also possible to use wildcards type operations, e.g.
 
